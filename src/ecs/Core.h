@@ -15,7 +15,7 @@
 
 // ==================== Debug Break ====================
 #if defined(_MSC_VER)
-#define lgt_DEBUGBREAK() __debugbreak()
+#define LGT_DEBUGBREAK() __debugbreak()
 #elif defined(__GNUC__) || defined(__clang__)
 #define lgt_DEBUGBREAK() __builtin_trap()
 #else
@@ -39,8 +39,8 @@
             }                                                                       \
         }
 #else
-#define lgt_ASSERT(expr) (void)0
-#define lgt_ASSERT_MSG(expr, msg, ...) (void)0
+#define LGT_ASSERT(expr) (void)0
+#define LGT_ASSERT_MSG(expr, msg, ...) (void)0
 #endif
 
 // ==================== Component Registration ====================
@@ -80,7 +80,7 @@ namespace Namespace {                                                           
 #define LGT_CORE_WARN(...)     /*::lgt::Log::GetCoreLogger()->warn(__VA_ARGS__)*/
 #define LGT_CORE_ERROR(...)    /*::lgt::Log::GetCoreLogger()->error(__VA_ARGS__)*/
 #define LGT_CORE_CRITICAL(...) /*::lgt::Log::GetCoreLogger()->critical(__VA_ARGS__)*/
-        
+
 #define LGT_TRACE(...)         /*::lgt::Log::GetClientLogger()->trace(__VA_ARGS__)*/
 #define LGT_INFO(...)          /*::lgt::Log::GetClientLogger()->info(__VA_ARGS__)*/
 #define LGT_WARN(...)          /*::lgt::Log::GetClientLogger()->warn(__VA_ARGS__)*/
