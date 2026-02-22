@@ -1,347 +1,264 @@
-#include <filesystem>
+﻿#include <filesystem>
 #include "Model.h"
 #include "Scene.h"
 
-// Constructor
-Model::Model(const std::string &filepath) : m_ModelFilepath(filepath)
-{
 
-    m_TextureFilePath = std::filesystem::path(filepath).parent_path().string();
-    Assimp::Importer importer;
-    const aiScene *scene = importer.ReadFile(
-        filepath,
-        aiProcess_Triangulate |
-            aiProcess_GenSmoothNormals |
-            aiProcess_CalcTangentSpace |
-            aiProcess_GlobalScale |
-            aiProcess_PreTransformVertices);
-    // Error handling
-    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
-    {
-        LOG(LogLevel::DEBUG, "Importing  Model  " + filepath);
-        LOG(LogLevel::_ERROR, "Failed to load model: " + filepath);
-        LOG(LogLevel::_ERROR, "Assimp error: " + std::string(importer.GetErrorString()));
-    }
-    else
-    {
-        // Logging import success
-        LOG(LogLevel::DEBUG, "Model imported successfully: " + filepath);
-        LOG(LogLevel::DEBUG, "Number of m_Meshes: " + std::to_string(scene->mNumMeshes));
-        LOG(LogLevel::DEBUG, "Loading model...");
-        LOG(LogLevel::DEBUG, "Processing root node...");
-        processNode(scene->mRootNode, scene);
-        std::cout << m_Nodes.size();
-        LOG(LogLevel::DEBUG, "Model loaded successfully: " + filepath);
-    }
+static glm::mat4 AiToGlm(const aiMatrix4x4& from)
+{
+	// Assimp is row-major, GLM is column-major — transpose on conversion
+	return glm::mat4(
+		from.a1, from.b1, from.c1, from.d1,
+		from.a2, from.b2, from.c2, from.d2,
+		from.a3, from.b3, from.c3, from.d3,
+		from.a4, from.b4, from.c4, from.d4);
 }
 
-Model::Model(const std::string &filepath, lgt::Scene*_scene) : m_ModelFilepath(filepath)
+// Shared Assimp import flags — aiProcess_PreTransformVertices is intentionally
+// omitted so that node transforms are preserved and the gizmo can move meshes.
+static constexpr unsigned int IMPORT_FLAGS =
+aiProcess_Triangulate |
+aiProcess_GenSmoothNormals |
+aiProcess_CalcTangentSpace |
+aiProcess_GlobalScale;
+
+
+bool Model::loadFromFile(const std::string& filepath)
 {
- 
-    m_TextureFilePath = std::filesystem::path(filepath).parent_path().string();
-    Assimp::Importer importer;
-    const aiScene *scene = importer.ReadFile(
-        filepath,
-        aiProcess_Triangulate |
-            aiProcess_GenSmoothNormals |
-            aiProcess_CalcTangentSpace |
-            aiProcess_GlobalScale |
-            aiProcess_PreTransformVertices);
-    // Error handling
-    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
-    {
-        LOG(LogLevel::DEBUG, "Importing  Model  " + filepath);
-        LOG(LogLevel::_ERROR, "Failed to load model: " + filepath);
-        LOG(LogLevel::_ERROR, "Assimp error: " + std::string(importer.GetErrorString()));
-    }
-    else
-    {
-        // Logging import success
-        LOG(LogLevel::DEBUG, "Model imported successfully: " + filepath);
-        LOG(LogLevel::DEBUG, "Number of m_Meshes: " + std::to_string(scene->mNumMeshes));
-        LOG(LogLevel::DEBUG, "Loading model...");
-        LOG(LogLevel::DEBUG, "Processing root node...");
-        processNode(scene->mRootNode, scene);
-        std::cout << m_Nodes.size();
-        LOG(LogLevel::DEBUG, "Model loaded successfully: " + filepath);
-        // create a Scene 
-        for (auto node : m_Nodes)
-        {
-            Renderable  component;
-            lgt::Entity  e = _scene->m_Roster->createEntity(node.name);
-             component.Transform = node._transform;
-            for (auto mesh : node.meshes)
-            {
-                    component._meshes.push_back(mesh);
-            }
-            e.addComponent<Renderable>(component);
-            _scene->m_Entites.push_back(e);
-        }
-    }
+	m_TextureFilePath = std::filesystem::path(filepath).parent_path().string();
+
+	Assimp::Importer importer;
+	const aiScene* scene = importer.ReadFile(filepath, IMPORT_FLAGS);
+
+	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+	{
+		LOG(LogLevel::_ERROR, "Failed to load model: " + filepath);
+		LOG(LogLevel::_ERROR, "Assimp error: " + std::string(importer.GetErrorString()));
+		return false;
+	}
+
+	LOG(LogLevel::DEBUG, "Model imported successfully: " + filepath);
+	LOG(LogLevel::DEBUG, "Meshes: " + std::to_string(scene->mNumMeshes));
+
+	// Pass identity as the root parent transform — each node accumulates downward
+	processNode(scene->mRootNode, scene, glm::mat4(1.0f));
+
+	LOG(LogLevel::DEBUG, "Model loaded: " + filepath +
+		" | Nodes: " + std::to_string(m_Nodes.size()));
+	return true;
 }
 
-// Cleanup resources
+
+Model::Model(const std::string& filepath) : m_ModelFilepath(filepath)
+{
+	loadFromFile(filepath);
+}
+
+Model::Model(const std::string& filepath, lgt::Scene* scene)
+	: m_ModelFilepath(filepath)
+{
+	if (!loadFromFile(filepath) || !scene)
+		return;
+
+	// Populate the ECS scene — one entity per node that has meshes
+	for (auto& node : m_Nodes)
+	{
+		if (node.meshes.empty())
+			continue; // skip empty nodes (e.g. structural/helper nodes)
+
+		Renderable component;
+		component.Transform = node._transform;
+
+		for (const auto& mesh : node.meshes)
+			component._meshes.push_back(mesh);
+
+		lgt::Entity e = scene->m_Roster->createEntity(node.name);
+		e.addComponent<Renderable>(component);
+		scene->m_Entites.push_back(e);
+	}
+
+	LOG(LogLevel::_INFO, "Scene populated with " +
+		std::to_string(scene->m_Entites.size()) + " entities.");
+}
+
+
 void Model::cleanUp()
 {
-    LOG(LogLevel::DEBUG, "Destroying model");
-
-    for (size_t i = 0; i < m_Meshes.size(); ++i)
-    {
-        m_Meshes[i].cleanUp();
-    }
-
-    LOG(LogLevel::DEBUG, "Model destroyed");
+	LOG(LogLevel::DEBUG, "Destroying model: " + m_ModelFilepath);
+	for (auto& mesh : m_Meshes)
+		mesh.cleanUp();
 }
 
-// Load material properties
-Material Model::LoadMaterial(aiMaterial *M) const
-{
-    Material material;
-    aiColor3D color;
-    float shininess;
 
-    // Diffuse color
-    if (M->Get(AI_MATKEY_COLOR_DIFFUSE, color) == AI_SUCCESS)
-    {
-        material.diffuse = glm::vec3(color.r, color.g, color.b);
-        LOG(LogLevel::_INFO, "Diffuse: " + std::to_string(color.r) + ", " + std::to_string(color.g) + ", " + std::to_string(color.b));
-    }
-    // Specular color
-    if (M->Get(AI_MATKEY_COLOR_SPECULAR, color) == AI_SUCCESS)
-    {
-        material.specular = glm::vec3(color.r, color.g, color.b);
-        LOG(LogLevel::_INFO, "Specular: " + std::to_string(color.r) + ", " + std::to_string(color.g) + ", " + std::to_string(color.b));
-    }
-    // Ambient color
-    if (M->Get(AI_MATKEY_COLOR_AMBIENT, color) == AI_SUCCESS)
-    {
-        material.ambient = glm::vec3(color.r, color.g, color.b);
-        LOG(LogLevel::_INFO, "Ambient: " + std::to_string(color.r) + ", " + std::to_string(color.g) + ", " + std::to_string(color.b));
-    }
-    // Shininess
-    if (M->Get(AI_MATKEY_SHININESS, shininess) == AI_SUCCESS)
-    {
-        material.shininess = shininess;
-        LOG(LogLevel::_INFO, "Shininess: " + std::to_string(shininess));
-    }
-    return material;
+void Model::processNode(const aiNode* node, const aiScene* scene, glm::mat4 parentTransform)
+{
+	// Accumulate the full world-space transform down the hierarchy.
+	// Without this, nodes only store their local transform and meshes
+	// appear at the wrong position unless PreTransformVertices is used.
+	glm::mat4 worldTransform = parentTransform * AiToGlm(node->mTransformation);
+
+	Node myNode;
+	myNode.name = node->mName.C_Str();
+	myNode._transform = worldTransform;
+
+	LOG(LogLevel::_INFO,
+		"Node: " + myNode.name +
+		" | Meshes: " + std::to_string(node->mNumMeshes) +
+		" | Children: " + std::to_string(node->mNumChildren));
+
+	for (unsigned int i = 0; i < node->mNumMeshes; ++i)
+	{
+		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+		myNode.meshes.push_back(processMesh(mesh, scene));
+	}
+
+	m_Nodes.push_back(std::move(myNode));
+
+	for (unsigned int i = 0; i < node->mNumChildren; ++i)
+		processNode(node->mChildren[i], scene, worldTransform); // pass accumulated transform
 }
 
-// Process mesh data
-Mesh Model::processMesh(const aiMesh *mesh, const aiScene *scene)
+
+Mesh Model::processMesh(const aiMesh* mesh, const aiScene* scene)
 {
-    // Updated texture type mapping for better organization
-    struct TextureTypeInfo
-    {
-        aiTextureType assimpType;
-        TextureType meshType;
-        std::string name;
-    };
+	std::vector<vertex>       Vertices;
+	std::vector<unsigned int> Indices;
+	std::vector<std::shared_ptr<Texture>> Textures;
+	Material material;
 
-    std::vector<TextureTypeInfo> textureTypes = {
-        {aiTextureType_DIFFUSE, TextureType::DIFFUSE, "diffuse"},
-        {aiTextureType_NORMALS, TextureType::NORMAL, "normal"},
-        {aiTextureType_SPECULAR, TextureType::SPECULAR, "specular"},
-        {aiTextureType_HEIGHT, TextureType::NORMAL, "height"} // Height maps can be used as normal maps
-    };
+	Vertices.reserve(mesh->mNumVertices);
 
-    Material material;
-    std::vector<vertex> Vertices;
-    std::vector<unsigned int> Indices;
-    std::vector<std::shared_ptr<Texture>> Textures;
-    glm::mat4 meshTransform;
+	for (unsigned int i = 0; i < mesh->mNumVertices; ++i)
+	{
+		vertex v;
+		v.pos = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };
 
-    LOG(LogLevel::_INFO, mesh->HasTangentsAndBitangents() ? "Mesh has tangent and bitangent data" : "Mesh lacks tangent and bitangent data");
+		v.norm = mesh->HasNormals()
+			? glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z)
+			: glm::vec3(0.0f, 1.0f, 0.0f);
 
-    // Process vertices
-    for (unsigned int i = 0; i < mesh->mNumVertices; ++i)
-    {
-        vertex v;
-        v.pos = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
+		v.textcoord = mesh->mTextureCoords[0]
+			? glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y)
+			: glm::vec2(0.0f);
 
-        // Normals
-        if (mesh->HasNormals())
-            v.norm = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
-        else
-            v.norm = glm::vec3(0.0f, 1.0f, 0.0f); // Default up vector
+		if (mesh->HasTangentsAndBitangents())
+		{
+			v.tangent = { mesh->mTangents[i].x,   mesh->mTangents[i].y,   mesh->mTangents[i].z };
+			v.bitangent = { mesh->mBitangents[i].x,  mesh->mBitangents[i].y, mesh->mBitangents[i].z };
+		}
+		else
+		{
+			v.tangent = { 1.0f, 0.0f, 0.0f };
+			v.bitangent = { 0.0f, 0.0f, 1.0f };
+		}
 
-        // Texture Coordinates
-        if (mesh->mTextureCoords[0])
-            v.textcoord = glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
-        else
-            v.textcoord = glm::vec2(0.0f);
+		Vertices.push_back(v);
+	}
 
-        // Tangents and Bitangents
-        if (mesh->HasTangentsAndBitangents())
-        {
-            v.tangent = glm::vec3(mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z);
-            v.bitangent = glm::vec3(mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z);
-        }
-        else
-        {
-            // Generate basic tangent space if not available
-            v.tangent = glm::vec3(1.0f, 0.0f, 0.0f);
-            v.bitangent = glm::vec3(0.0f, 0.0f, 1.0f);
-        }
+	for (unsigned int i = 0; i < mesh->mNumFaces; ++i)
+	{
+		const aiFace& face = mesh->mFaces[i];
+		for (unsigned int j = 0; j < face.mNumIndices; ++j)
+			Indices.push_back(face.mIndices[j]);
+	}
 
-        Vertices.push_back(v);
-    }
+	LOG(LogLevel::DEBUG, "Mesh loaded: " + std::string(mesh->mName.C_Str()) +
+		" | Verts: " + std::to_string(Vertices.size()) +
+		" | Indices: " + std::to_string(Indices.size()) +
+		" | Tangents: " + (mesh->HasTangentsAndBitangents() ? "yes" : "no"));
 
-    // Process indices (faces)
-    for (unsigned int i = 0; i < mesh->mNumFaces; ++i)
-    {
-        aiFace face = mesh->mFaces[i];
+	if (mesh->mMaterialIndex >= 0)
+	{
+		aiMaterial* M = scene->mMaterials[mesh->mMaterialIndex];
+		material = LoadMaterial(M);
 
-        for (unsigned int j = 0; j < face.mNumIndices; ++j)
-        {
-            Indices.push_back(face.mIndices[j]);
-        }
-    }
+		struct TexTypeInfo { aiTextureType ai; TextureType mt; const char* label; };
+		static const TexTypeInfo texTypes[] = {
+			{ aiTextureType_DIFFUSE,  TextureType::DIFFUSE,  "diffuse"  },
+			{ aiTextureType_NORMALS,  TextureType::NORMAL,   "normal"   },
+			{ aiTextureType_SPECULAR, TextureType::SPECULAR, "specular" },
+			{ aiTextureType_HEIGHT,   TextureType::NORMAL,   "height"   },
+		};
 
-    // Logging mesh details
-    LOG(LogLevel::DEBUG, "Model Mesh Loaded: " + std::string(mesh->mName.C_Str()));
-    LOG(LogLevel::_INFO, mesh->HasTextureCoords(0) ? "Mesh has texture coordinates" : "Mesh does not have texture coordinates");
-    LOG(LogLevel::_INFO, "Number of vertices: " + std::to_string(Vertices.size()));
-    LOG(LogLevel::_INFO, "Number of indices: " + std::to_string(Indices.size()));
+		for (const auto& t : texTypes)
+		{
+			unsigned int count = M->GetTextureCount(t.ai);
 
-    // Process material
-    if (mesh->mMaterialIndex >= 0)
-    {
-        aiMaterial *M = scene->mMaterials[mesh->mMaterialIndex];
-        aiString materialName;
+			if (count > 0)
+			{
+				if (t.mt == TextureType::NORMAL)   material.hasNormalMap = true;
+				if (t.mt == TextureType::SPECULAR)  material.hasSpecularMap = true;
+			}
 
-        if (M->Get(AI_MATKEY_NAME, materialName) == AI_SUCCESS)
-        {
-            LOG(LogLevel::_INFO, "Material Name: " + std::string(materialName.C_Str()));
-        }
+			for (unsigned int i = 0; i < count; ++i)
+			{
+				aiString str;
+				M->GetTexture(t.ai, i, &str);
+				std::string texPath = m_TextureFilePath + "/" + str.C_Str();
 
-        // Load material properties first
-        material = LoadMaterial(M);
+				auto tex = std::make_shared<Texture>(texPath);
+				tex->setType(t.mt);
+				Textures.push_back(tex);
 
-        // Process textures with improved organization
-        for (auto &typeInfo : textureTypes)
-        {
-            unsigned int textureCount = M->GetTextureCount(typeInfo.assimpType);
+				LOG(LogLevel::_INFO, std::string("Texture [") + t.label + "]: " + texPath);
+			}
+		}
+	}
 
-            if (textureCount > 0)
-            {
-                // Update material flags based on available textures
-                if (typeInfo.meshType == TextureType::NORMAL)
-                    material.hasNormalMap = true;
-                else if (typeInfo.meshType == TextureType::SPECULAR)
-                    material.hasSpecularMap = true;
-            }
-
-            for (unsigned int i = 0; i < textureCount; ++i)
-            {
-                aiString str;
-                M->GetTexture(typeInfo.assimpType, i, &str);
-                std::string texturePath = m_TextureFilePath + "/" + std::string(str.C_Str());
-
-                auto texture = std::make_shared<Texture>(texturePath);
-                texture->setType(typeInfo.meshType); // Set the texture type
-                Textures.push_back(texture);
-
-                LOG(LogLevel::_INFO, "Loaded " + typeInfo.name + " texture " + std::to_string(i + 1) +
-                                         ": " + texturePath);
-            }
-        }
-    }
-
-    if (scene)
-        return Mesh(Vertices, Indices, material, Textures);
+	return Mesh(Vertices, Indices, material, Textures);
 }
 
-glm::mat4 AiToGlm(const aiMatrix4x4 &from)
+Material Model::LoadMaterial(aiMaterial* M) const
 {
-    return glm::mat4(
-        from.a1, from.b1, from.c1, from.d1,
-        from.a2, from.b2, from.c2, from.d2,
-        from.a3, from.b3, from.c3, from.d3,
-        from.a4, from.b4, from.c4, from.d4);
+	Material mat;
+	aiColor3D color;
+	float shininess = 0.0f;
+
+	if (M->Get(AI_MATKEY_COLOR_DIFFUSE, color) == AI_SUCCESS) mat.diffuse = { color.r, color.g, color.b };
+	if (M->Get(AI_MATKEY_COLOR_SPECULAR, color) == AI_SUCCESS) mat.specular = { color.r, color.g, color.b };
+	if (M->Get(AI_MATKEY_COLOR_AMBIENT, color) == AI_SUCCESS) mat.ambient = { color.r, color.g, color.b };
+	if (M->Get(AI_MATKEY_SHININESS, shininess) == AI_SUCCESS) mat.shininess = shininess;
+
+	return mat;
 }
 
-// Recursively process nodes
-void Model::processNode(const aiNode *node, const aiScene *scene)
+// Full-parameter overload (legacy path)
+void Model::Render(const shader& Shader, const glm::mat4& modelMatrix, const glm::mat4& viewMatrix,
+	const glm::mat4& projectionMatrix, const glm::vec3& viewPos, const glm::vec3& lightPos,
+	const glm::vec3& lightColor, bool useColor, const glm::vec3& color)
 {
-    Node myNode;
-    myNode.name = std::string(node->mName.C_Str());
-    std::string nodeInfo =
-        "Node: " + std::string(node->mName.C_Str()) +
-        " | m_Meshes: " + std::to_string(node->mNumMeshes) +
-        " | Children: " + std::to_string(node->mNumChildren);
+	Shader.setMat4("u_view", viewMatrix);
+	Shader.setMat4("u_projection", projectionMatrix);
 
-    LOG(LogLevel::_INFO, nodeInfo);
+	glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(modelMatrix)));
+	Shader.setMat3("u_normalMatrix", normalMatrix);
 
-    // get the node transform
-    myNode._transform = AiToGlm(node->mTransformation);
-    // m_transforms.push_back(AiToGlm(node->mTransformation));
+	Shader.setVec3("u_viewPos", viewPos);
+	Shader.setVec3("u_light.position", lightPos);
+	Shader.setVec3("u_light.color", lightColor);
+	Shader.setFloat("u_light.intensity", 1.0f);
+	Shader.setFloat("u_light.constant", 1.0f);
+	Shader.setFloat("u_light.linear", 0.09f);
+	Shader.setFloat("u_light.quadratic", 0.032f);
+	Shader.setBool("u_useColor", useColor);
+	if (useColor) Shader.setVec3("u_color", color);
 
-    // Process all m_Meshes for this node
-    for (unsigned int i = 0; i < node->mNumMeshes; ++i)
-    {
-        aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-        myNode.meshes.push_back(processMesh(mesh, scene));
-        //  m_Meshes.push_back(std::move(processMesh(mesh, scene)));
-    }
-
-    m_Nodes.push_back(std::move(myNode));
-    // Recursively process each child node
-    for (unsigned int i = 0; i < node->mNumChildren; ++i)
-    {
-        processNode(node->mChildren[i], scene);
-    }
+	for (auto& mesh : m_Meshes)
+		mesh.render(Shader);
 }
 
-// Updated render function to work with the new shader
-void Model::Render(const shader &Shader, const glm::mat4 &modelMatrix, const glm::mat4 &viewMatrix,
-                   const glm::mat4 &projectionMatrix, const glm::vec3 &viewPos, const glm::vec3 &lightPos,
-                   const glm::vec3 &lightColor, bool useColor, const glm::vec3 &color)
+// Convenience overload — renders all nodes using their world transforms.
+// Each node sets its own u_model so the shader sees the correct matrix.
+void Model::Render(const shader& Shader)
 {
-    // Set transformation matrices
-    // Shader.setMat4("u_model", modelMatrix);
-    Shader.setMat4("u_view", viewMatrix);
-    Shader.setMat4("u_projection", projectionMatrix);
+	for (auto& node : m_Nodes) // NOTE: by reference — avoids copying mesh/texture data
+	{
+		Shader.setMat4("u_model", node._transform);
 
-    // Calculate and set normal matrix
-    glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(modelMatrix)));
-    Shader.setMat3("u_normalMatrix", normalMatrix);
+		// Normal matrix derived from this node's world transform
+		glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(node._transform)));
+		Shader.setMat3("u_normalMatrix", normalMatrix);
 
-    // Set view position
-    Shader.setVec3("u_viewPos", viewPos);
-
-    // Set light properties
-    Shader.setVec3("u_light.position", lightPos);
-    Shader.setVec3("u_light.color", lightColor);
-    Shader.setFloat("u_light.intensity", 1.0f);
-    Shader.setFloat("u_light.constant", 1.0f);
-    Shader.setFloat("u_light.linear", 0.09f);
-    Shader.setFloat("u_light.quadratic", 0.032f);
-
-    // Set color mode
-    Shader.setBool("u_useColor", useColor);
-    if (useColor)
-    {
-        Shader.setVec3("u_color", color);
-    }
-
-    // Render each mesh
-    for (size_t i = 0; i < m_Meshes.size(); ++i)
-    {
-        m_Meshes[i].render(Shader);
-    }
-}
-
-// Convenience overload that maintains backward compatibility
-void Model::Render(const shader &Shader)
-{
-
-    for (auto node : m_Nodes)
-    {
-        Shader.setMat4("u_model", node._transform);
-        for (auto mesh : node.meshes)
-        {
-            mesh.render(Shader);
-        }
-    }
+		for (auto& mesh : node.meshes) // also by reference
+			mesh.render(Shader);
+	}
 }

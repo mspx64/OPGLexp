@@ -147,5 +147,6 @@
     <None Include="res\shaders\grid.shader" />
     <None Include="res\shaders\ShadowDebug.shader" />
     <None Include="res\shaders\PBR.shader" />
+    <None Include="..\RenderX\.clang-format" />
   </ItemGroup>
 </Project>

@@ -28,14 +28,14 @@
         {                                                                           \
             if (!(expr)) {                                                          \
                                  \
-                lgt_DEBUGBREAK();                                                   \
+                LGT_DEBUGBREAK();                                                   \
             }                                                                       \
         }
 
 #define LGT_ASSERT_MSG(expr, msg, ...)                                          \
         {                                                                           \
             if (!(expr)) {                                                           \
-                lgt_DEBUGBREAK();                                                   \
+                LGT_DEBUGBREAK();                                                   \
             }                                                                       \
         }
 #else

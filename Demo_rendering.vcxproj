@@ -172,6 +172,7 @@
     <ClCompile Include="src\tests\testmodel.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\RenderX\.clang-format" />
     <None Include="res\shaders\bsc.shader" />
     <None Include="res\shaders\Depth.shader" />
     <None Include="res\shaders\grid.shader" />

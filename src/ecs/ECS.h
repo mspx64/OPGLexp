@@ -105,7 +105,7 @@ namespace lgt {
 
     // Entity method definitions
     inline Entity::Entity(EntityHandle handle, Roster* registry, UUID id  , std::string name)
-        : m_Handle(handle), m_Registry(registry), m_UUID(id) ,m_Name(name) {
+        : m_Name(name), m_Handle(handle), m_UUID(id) ,m_Registry(registry) {
     }
 
     template<typename ComponentType, typename... Args>
