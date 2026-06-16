@@ -12,49 +12,21 @@ The long-term goal is to evolve this project into a **Physically Based Renderer 
 
 <img width="1919" height="1079" alt="Screenshot 2026-06-15 002810" src="https://github.com/user-attachments/assets/9c890898-f675-4820-8227-f01c3f6e47c2" />
 
-## 📸 Current Features (Experimental)
-
 > These are early implementations meant to support learning and experimentation.
-
-- 🎮 **Interactive Camera System** with configurable movement speed
-- 💡 **Lighting Settings Panel**
-  - Position control
-  - RGB color picker
-  - Auto-alignment with the camera
-- 🎨 **Real-Time Shader Reloading**
-  - Reload vertex/fragment shaders without restarting the app
-- 📦 **Model Controls**
-  - Load `.fbx` or `.obj` files
-  - Position, Rotation (in degrees), and Scaling transforms
-  - Reset buttons for convenience
-- 🌌 **Environment Controls**
-  - Background color configuration
-- 🧭 **Camera Diagnostics Panel**
-  - Real-time position and direction info
-- 🧪 **Render Mode Switching**
-  - Fill, Wireframe, Point modes
-- ⚖️ **Gravity Toggle** (basic simulation toggle)
-- 📈 **FPS Display** (updated in real time via ImGui)
-
 ---
 
-## 🚀 Planned Features
+##  Planned Features
 
 > Future development will progressively introduce more advanced rendering concepts.
 
-- ✅ Physically Based Rendering (PBR)
-  - Albedo, Roughness, Metalness, Normal maps
-- ✅ Image-Based Lighting (IBL) with HDR
-- ✅ Shadow Mapping (Directional + Point lights)
-- ✅ Material system with GUI-based editing
-- ✅ Post-processing effects (Bloom, FXAA, Tonemapping)
-- ✅ Scene hierarchy and editor
-- ✅ Entity Component System (ECS) for simulation
-- ✅ Asset hot-reloading
+-  Physically Based Rendering (PBR)
+-  Image-Based Lighting (IBL) with HDR
+-  Post-processing effects (Bloom, FXAA, Tonemapping)
+-  Asset hot-reloading
 
 ---
 
-## 🧱 Tech Stack
+## External Libs
 
 | Component              |                  Tool used                          |
 |------------------------|-----------------------------------------------------|
@@ -67,7 +39,7 @@ The long-term goal is to evolve this project into a **Physically Based Renderer 
 
 ---
 
-## 🛠️ Building the Project
+## Building the Project
 
 ### Prerequisites
 - Visual Studio 2022 (or later)
