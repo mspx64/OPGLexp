@@ -1,80 +1,93 @@
 
-#include"Logger.h"
-#include"tests/testmodel.h"
+#include "Renderer/ErrorReporting.h"
+#include "Renderer/Scene.h"
+#include "Renderer/camera.h"
+#include "Renderer/renderer.h"
+#include "UI/Editor.h"
+#include "helpers/Logger.h"
 
-//TODO
-//Fix the diffuse texture mapping issue 
-// shadow implementation 
+#define MAIN        void main()
+#define MAIN_RETURN return
 
-#ifdef LGT_DEBUG
-#define MAIN void main()
-#define MAIN_RETURN return 
-#else
-#define MAIN int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
-#define MAIN_RETURN return 1
-#endif 
+void main() {
+    GLFWwindow* window;
 
-MAIN
-{
-   GLFWwindow * window;
-   Logger::GetInstance().Init();
-   /* Initialize the library */
-   if (!glfwInit())
-	   MAIN_RETURN;
-   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
-   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-   float height = 1080, width = 1920;
+    CORE_LOG_INIT();
 
-   window = glfwCreateWindow(width,height,"Lightnig", NULL, NULL);
-   /* Create a windowed mode window and its OpenGL context */
-   if (!window)
-	   MAIN_RETURN;
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    float height = 1080, width = 1920;
 
-   /* Make the window's context current */
-   glfwMakeContextCurrent(window);
-   glfwSwapInterval(0);
-   if (glewInit() != GLEW_OK)
-	  Logger::GetInstance().Log(LogLevel::_ERROR, "Failed to initialize GLEW");
+    window = glfwCreateWindow(width, height, "Lightnig", NULL, NULL);
+    assert(window);
+    glfwMakeContextCurrent(window);
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        CORE_ERROR("Failed to initialize GLAD");
+    }
+    enableReportGlErrors();
+    glfwSwapInterval(0);
 
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
 
-   //initilize imgui
-   IMGUI_CHECKVERSION();
-   ImGui::CreateContext();
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("# version 460");
 
-   ImGui_ImplGlfw_InitForOpenGL(window, true);
-   ImGui_ImplOpenGL3_Init("# version 450");
+    // glEnable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_DEPTH_TEST);
 
-   //gl settings
-   glEnable(GL_CULL_FACE);
-   glEnable(GL_BLEND);
-   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-   glEnable(GL_DEPTH_TEST);
+    CORE_INFO("{}", (char*)glGetString(GL_VENDOR));
+    CORE_INFO("{}", (char*)glGetString(GL_RENDERER));
 
-   Logger::GetInstance().SetLogFile("log.txt");
-   LOG(LogLevel::DEBUG, "every one is also fuckef up in there own way");
+    lgt::Scene  scene;
+    lgt::Camera camera((int)width, (int)height, glm::vec3(0.0f));
 
-   Test* test = new testModel;
+    // scene.LoadGltf("res/modles/Lanten/lantern_fbx.fbx");
+    scene.LoadGltf("res/modles/Helmet/DamagedHelmet.gltf");
 
-   //game loop
-   while (!glfwWindowShouldClose(window))
-   {
-	   /* Render here */
-	   test->onUpdate(window);
-	   test->onRender();
-	   test->onImguiRender();
+    lgt::Renderer renderer(&scene, &camera);
 
-	   /* Swap front and back buffers */
-	   glfwSwapBuffers(window);
+    renderer.init();
 
-	   /* Poll for and process events */
-	   glfwPollEvents();
-   }
-   delete test;
-   ImGui_ImplOpenGL3_Shutdown();
-   ImGui_ImplGlfw_Shutdown();
-   ImGui::DestroyContext();
+    // game loopx
+    while (!glfwWindowShouldClose(window)) {
 
-   glfwDestroyWindow(window);
-   glfwTerminate();
+        glfwPollEvents();
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+        camera.update(window, 0.001, 20);
+        // scene.Update();
+
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        Editor::DrawTextureSamplerNode(lgt::g_Textures.begin()->first, lgt::g_Textures.begin()->second);
+        ImGui::Render();
+
+        renderer.render();
+
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+
+            renderer.shutdown();
+            renderer.init();
+        }
+
+        glfwSwapBuffers(window);
+    }
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
+    glfwDestroyWindow(window);
+    glfwTerminate();
 }

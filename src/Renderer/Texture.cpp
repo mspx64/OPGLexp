@@ -1,81 +1,85 @@
 #include "Texture.h"
+#include "helpers/Logger.h"
 
+namespace lgt {
 
-Texture::Texture(const std::string& filepath) :
-	m_RenderID(0), m_height(0), m_width(0), m_bpp(0), m_localbuffer(nullptr)
-{
-	GLenum dataFormat = GL_RGBA;
-	GLenum internalFormat = GL_RGBA8;
+std::unordered_map<std::string, Texture>                   g_Textures;
+std::unordered_map<SamplerState, GLuint, SamplerStateHash> g_SamplerCache;
 
-	stbi_set_flip_vertically_on_load(1);
-	m_localbuffer = stbi_load(filepath.c_str(), &m_width, &m_height, &m_bpp, 0);
-
-	if (!m_localbuffer) {
-		LOG(LogLevel::_ERROR, "Failed to load image: " + filepath);
-		return;
-	}
-
-	switch (m_bpp)
-	{
-	case 1:
-		dataFormat = GL_RED;
-		internalFormat = GL_RED;
-		break;
-	case 3:
-		dataFormat = GL_RGB;
-		internalFormat = GL_RGB;
-		break;
-	case 4:
-		dataFormat = GL_RGBA;
-		internalFormat = GL_RGBA;
-		break;
-	default:
-		LOG(LogLevel::_ERROR ,"Unsupported texture format: "  + std::to_string(m_bpp )) ;
-		break;
-	}
-
-	glGenTextures(1, &m_RenderID);
-	glBindTexture(GL_TEXTURE_2D, m_RenderID);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-
-	glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, m_width, m_height, 0, dataFormat, GL_UNSIGNED_BYTE, m_localbuffer);
-
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-	stbi_image_free(m_localbuffer);
-}
-GLuint Texture::GetTextureID()
-{
-	return m_RenderID;
-}
-void  Texture::cleanUp()
-{
-	LOG(LogLevel::DEBUG, "Deleting Texture ID: " + std::to_string(m_RenderID));
-	glDeleteTextures(1, &m_RenderID);
-	LOG(LogLevel::DEBUG, "Texture deleted");
+Texture GetTexture(const std::string& textureId) {
+    auto it = g_Textures.find(textureId);
+    if (it != g_Textures.end())
+        return it->second;
+    CORE_ERROR("Texture not found {}", textureId);
+    return Texture{};
 }
 
-void Texture::Bind(unsigned int slot) const
-{   
-		glActiveTexture(GL_TEXTURE0+slot);
- 		glBindTexture(GL_TEXTURE_2D, m_RenderID);
- }
+Texture CreateTexture(const TextureDesc& desc) {
 
-void Texture::Unbind() const 
-{
-	glBindTexture(GL_TEXTURE_2D,0);
+    GLenum  internalFormat = GL_RGBA8;
+    GLenum  format         = GL_RGBA;
+    GLsizei levels         = 1;
+
+    Texture texture{};
+    texture.width  = desc.width;
+    texture.height = desc.height;
+
+    // this is intended  to use as the validation falg in the engine
+    // TODO add more roboust validation
+    texture.isValid = true;
+
+    if (desc.generateMips)
+        levels = static_cast<GLsizei>(std::floor(std::log2(std::max<float>(desc.width, desc.height)))) + 1;
+
+    glCreateTextures(GL_TEXTURE_2D, 1, &texture.handle);
+    glTextureStorage2D(texture.handle, levels, internalFormat, texture.width, texture.height);
+    glTextureSubImage2D(texture.handle, 0, 0, 0, texture.width, texture.height, format, GL_UNSIGNED_BYTE, desc.data);
+
+    if (desc.generateMips)
+        glGenerateTextureMipmap(texture.handle);
+
+    return texture;
 }
 
-void Texture::setType(TextureType type)
-{
-	m_type = type; 
+void DestroyTexture(const std::string& textureId) {
+    auto it = g_Textures.find(textureId);
+    if (it == g_Textures.end())
+        return;
+
+    glDeleteTextures(1, &it->second.handle);
+    g_Textures.erase(it);
 }
 
-TextureType Texture::getType() const
-{
-	return m_type;
+GLuint CreateSampler(const SamplerState& state) {
+    GLuint sampler;
+    glCreateSamplers(1, &sampler);
+
+    glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, state.wrapMode);
+    glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, state.wrapMode);
+    glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, state.magFilter);
+    glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, state.minFilter);
+
+    return sampler;
+    // TODO add support for the max anistr...
 }
+
+GLuint64 GetBindlessTextureSamplerHandle(GLuint textureHandle, SamplerState sampler) {
+
+    auto     it = g_SamplerCache.find(sampler);
+    GLuint64 result;
+    if (it != g_SamplerCache.end()) {
+        // TODO make the cache for the texture bindless handles and query the cache first before calling the dirver
+        result = glGetTextureSamplerHandleARB(textureHandle, it->second);
+        glMakeTextureHandleResidentARB(result);
+
+    } else {
+        auto newSampler = CreateSampler(sampler);
+        result          = glGetTextureSamplerHandleARB(textureHandle, newSampler);
+        glMakeTextureHandleResidentARB(result);
+        // TODO chace the texture-sampler piar ;
+        g_SamplerCache[sampler] = newSampler;
+    }
+    return result;
+}
+
+} // namespace lgt

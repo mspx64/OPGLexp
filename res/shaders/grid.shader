@@ -45,6 +45,8 @@ void main()
 #shader Fragment
 #version 450 core
 
+
+
 // Inputs from vertex shader
 layout(location = 0) in vec3 v_WorldPos;
 layout(location = 1) in vec3 v_LocalPos;

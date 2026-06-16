@@ -1,18 +1,19 @@
 #pragma once
-
-
+#include "glad.h"
 #include <cstdlib>
-#include<iostream>
-#include<fstream>
-#include<string>
-#include<sstream>
-#include<unordered_map>
+#include <fstream>
+#include <glm/glm.hpp>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <unordered_map>
 
-class camera;
-struct Material;
+namespace lgt {
+class Camera;
+struct MaterialGPU;
 
 enum ShaderType {
-    DEPTHSHADER ,
+    DEPTHSHADER,
     COLORSHADER
 };
 
@@ -21,48 +22,47 @@ struct shadersource {
     std::string fragmentSource;
 };
 
-class shader {
+class Pipeline {
 private:
-    std::string m_filepath;
-    GLuint m_RenderID;
-    ShaderType m_type  = ShaderType::COLORSHADER;
+    std::string                                  m_filepath;
+    GLuint                                       m_RenderID;
+    ShaderType                                   m_type = ShaderType::COLORSHADER;
     mutable std::unordered_map<std::string, int> m_uniformLocationCache;
 
     // Helper methods
     shadersource parseShader(const std::string& filepath);
     unsigned int compileShader(unsigned int type, const std::string& source);
     unsigned int createShader(const std::string& vertexShader, const std::string& fragmentShader);
-    void cacheUniformLocations();
-    int getUniformLocation(const std::string& name) const;
+    void         cacheUniformLocations();
+    int          getUniformLocation(const std::string& name) const;
 
 public:
     // Constructor and destructor
-    explicit shader(const std::string& filepath);
-    explicit shader(const std::string& filepath , ShaderType type);
+    explicit Pipeline(const std::string& filepath);
+    explicit Pipeline(const std::string& filepath, ShaderType type);
 
-    ~shader();
+    ~Pipeline();
 
     // Delete copy constructor and assignment operator to prevent issues
-    shader(const shader&) = delete;
-    shader& operator=(const shader&) = delete;
+    Pipeline(const Pipeline&)            = delete;
+    Pipeline& operator=(const Pipeline&) = delete;
 
     // Move constructor and assignment operator
-    shader(shader&& other) noexcept
-        : m_filepath(std::move(other.m_filepath))
-        , m_RenderID(other.m_RenderID)
-        , m_uniformLocationCache(std::move(other.m_uniformLocationCache))
-    {
+    Pipeline(Pipeline&& other) noexcept
+        : m_filepath(std::move(other.m_filepath)),
+          m_RenderID(other.m_RenderID),
+          m_uniformLocationCache(std::move(other.m_uniformLocationCache)) {
         other.m_RenderID = 0;
     }
 
-    shader& operator=(shader&& other) noexcept {
+    Pipeline& operator=(Pipeline&& other) noexcept {
         if (this != &other) {
             if (m_RenderID != 0) {
                 glDeleteProgram(m_RenderID);
             }
 
-            m_filepath = std::move(other.m_filepath);
-            m_RenderID = other.m_RenderID;
+            m_filepath             = std::move(other.m_filepath);
+            m_RenderID             = other.m_RenderID;
             m_uniformLocationCache = std::move(other.m_uniformLocationCache);
 
             other.m_RenderID = 0;
@@ -72,7 +72,7 @@ public:
 
     // Modern shader binding methods
     void use() const;
-    void useWithCamera(camera& Camera);
+    void useWithCamera(Camera& Camera);
     void unuse() const;
 
     // Modern uniform setting methods
@@ -90,55 +90,14 @@ public:
     void setMat4(const std::string& name, const glm::mat4& mat) const;
 
     // High-level uniform setting methods
-    void setMaterial(const Material& material) const;
-    void setLight(const glm::vec3& position, const glm::vec3& color, float intensity = 1.0f,
-        float constant = 1.0f, float linear = 0.09f, float quadratic = 0.032f) const;
-    void setTextures(int diffuseUnit = 0, int normalUnit = 1, int specularUnit = 2 , int depthunit = 3 ) const;
-
-    // Backward compatibility methods (deprecated - use modern equivalents)
-    [[deprecated("Use setInt() instead")]]
-    unsigned int setuniform1i(const std::string& name, int value) const;
-
-    [[deprecated("Use setFloat() instead")]]
-    unsigned int setuniform1f(const std::string& name, float value) const;
-
-    [[deprecated("Use setVec4() instead")]]
-    unsigned int setuniform4f(const std::string& name, float v0, float v1, float v2, float v3) const;
-
-    [[deprecated("Use setMat4() instead")]]
-    unsigned int setuniform4matf(const std::string& name, const glm::mat4& matrix) const;
-
-    [[deprecated("Use setVec3() instead")]]
-    unsigned int setuniformvec3(const std::string& name, const glm::vec3& vec) const;
-
-    [[deprecated("Use use() instead")]]
-    void Bind() const;
-
-    [[deprecated("Use useWithCamera() instead")]]
-    void Bind_UseCamera(camera& Camera);
-
-    [[deprecated("Use unuse() instead")]]
-    void Unbind() const;
+    void setMaterial(uint32_t index) const;
 
     // Utility methods
-    GLuint getID() const;
-    ShaderType getType() const ;
+    GLuint             getID() const;
+    ShaderType         getType() const { return m_type; };
     const std::string& getPath() const;
-    bool isValid() const;
-    void reload();
-    void printActiveUniforms() const;
-
-    // RAII helper for automatic shader binding/unbinding
-    class ScopedBind {
-    public:
-        explicit ScopedBind(const shader& shaderObj);
-        ~ScopedBind();
-
-        // Prevent copying
-        ScopedBind(const ScopedBind&) = delete;
-        ScopedBind& operator=(const ScopedBind&) = delete;
-
-    private:
-        const shader& m_shader;
-    };
+    bool               isValid() const;
+    void               reload();
+    void               printActiveUniforms() const;
 };
+} // namespace lgt

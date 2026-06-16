@@ -1,108 +1,67 @@
 ﻿#pragma once
-#include "Mesh.h"
+#include <filesystem>
+#include <glm/glm.hpp>
+#include <memory>
+#include <string>
+#include <vector>
+
+// Include Assimp headers
+#include <assimp/Importer.hpp>
+#include <assimp/postprocess.h>
+#include <assimp/scene.h>
+
 #include "renderer.h"
-#include "ecs/ECS.h"
-#include <glm/gtx/string_cast.hpp>
 
-struct Renderable
-{
-	std::vector<Mesh> _meshes;
-	glm::mat4 Transform;
+namespace lgt {
+
+struct SceneNode {
+    std::string       name;
+    std::vector<Mesh> meshes;
+
+    glm::mat4 localTransform  = glm::mat4(1.0f);
+    glm::mat4 globalTransform = glm::mat4(1.0f);
+
+    SceneNode*                              parent = nullptr;
+    std::vector<std::shared_ptr<SceneNode>> children; // Quick top-down traversal links and strsge
+
+    void UpdateTransformCascades() {
+        if (parent) {
+            globalTransform = parent->globalTransform * localTransform;
+        } else {
+            globalTransform = localTransform;
+        }
+
+        for (auto child : children) {
+            child->UpdateTransformCascades();
+        }
+    }
 };
-LGT_REGISTER_COMPONENT(lgt, Renderable);
 
-namespace lgt
-{
-	class Scene
-	{
-	public:
-		void Render(const shader& Shader)
-		{
-			for (auto& e : m_Entites)
-			{
-				auto& component = e.getComponent<Renderable>();
-				Shader.setMat4("u_model", component.Transform);
-				for (auto& mesh : component._meshes)
-				{
-					mesh.render(Shader);
-				}
-			}
-		}
+class Scene {
+public:
+    Scene()  = default;
+    ~Scene() = default;
 
-		const std::vector<Entity> getEntites()
-		{
-			return m_Entites;
-		}
-		void RenderScenePanel()
-		{
-			ImGui::Begin("Entities");
-			if (m_Entites.empty())
-			{
-				ImGui::TextDisabled("No entities in scene");
-			}
-			else
-			{
-				for (auto& entity : m_Entites)
-				{
-					bool isSelected = (m_Selcted == entity.getHandle());
-					if (ImGui::Selectable(entity.getName().c_str(), isSelected))
-						m_Selcted = entity.getHandle();
+    Scene(const Scene&)            = delete;
+    Scene& operator=(const Scene&) = delete;
 
-					if (ImGui::BeginPopupContextItem(entity.getName().c_str()))
-					{
-						if (ImGui::MenuItem("Select"))
-							m_Selcted = entity.getHandle();
-						ImGui::EndPopup();
-					}
-				}
-			}
-			ImGui::End();
-		}
+    Scene(Scene&&) noexcept            = default;
+    Scene& operator=(Scene&&) noexcept = default;
 
-		void RenderGizmo(glm::mat4 view, glm::mat4 proj, ImGuizmo::OPERATION operation,
-			ImVec2 windowPos, ImVec2 windowSize)
-		{
-			if (m_Selcted == EntityHandle{}) return;
+    bool LoadGltf(const std::filesystem::path& path);
+    void Update();
+    void Clear();
 
-			for (auto& entity : m_Entites)
-			{
-				if (entity.getHandle() != m_Selcted) continue;
+    const std::vector<std::shared_ptr<SceneNode>>& getRootNodes() const { return m_RootNodes; }
+    std::vector<MaterialGPU>&                      getMaterialBuffer() { return m_materialBuffer; };
 
-				auto& renderable = entity.getComponent<Renderable>();
-				glm::mat4 before = renderable.Transform;
+private:
+    void                       processMaterials(const aiScene* scene, const std::string& dir);
+    std::shared_ptr<SceneNode> parseNode(aiNode* node, const aiScene* scene);
+    Mesh                       processMesh(aiMesh* mesh);
 
-				ImGuizmo::SetOrthographic(false);
-				ImGuizmo::SetDrawlist(ImGui::GetWindowDrawList());
-				ImGuizmo::SetRect(windowPos.x, windowPos.y, windowSize.x, windowSize.y);
+    std::vector<MaterialGPU>                m_materialBuffer;
+    std::vector<std::shared_ptr<SceneNode>> m_RootNodes;
+};
 
-				bool changed = ImGuizmo::Manipulate(
-					glm::value_ptr(view),
-					glm::value_ptr(proj),
-					operation,
-					ImGuizmo::LOCAL,
-					glm::value_ptr(renderable.Transform)
-				);
-
-				if (changed)
-				{
-					LOG(LogLevel::_INFO, "Before: " + glm::to_string(before));
-					LOG(LogLevel::_INFO, "After:  " + glm::to_string(renderable.Transform));
-				}
-
-				break;
-			}
-		}
-
-		Scene()
-		{
-			m_Roster = std::make_unique<Roster>();
-		}
-
-	private:
-		EntityHandle m_Selcted;
-		Scope<Roster> m_Roster;
-		std::vector<Entity> m_Entites;
-
-		friend Model;
-	};
-}
+} // namespace lgt
