@@ -189,8 +189,8 @@ bool Scene::LoadGltf(const std::filesystem::path& path) {
 
     // Use standard postprocessing configuration options to sanitize incoming
     // graphics structures
-    static constexpr unsigned int IMPORT_FLAGS =
-        aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace | aiProcess_GlobalScale;
+    static constexpr unsigned int IMPORT_FLAGS = aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace |
+                                                 aiProcess_GlobalScale | aiProcess_FlipUVs;
 
     const aiScene* scene = importer.ReadFile(path.string(), IMPORT_FLAGS);
 

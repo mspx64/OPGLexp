@@ -6,7 +6,7 @@
 #include "Renderer/Texture.h"
 
 namespace Editor {
-
+void DrawMaterialEditorPanel();
 // texture
 void DrawTextureSamplerNode(const std::string& textureId, lgt::Texture& texture);
 

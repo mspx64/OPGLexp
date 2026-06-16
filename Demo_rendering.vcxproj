@@ -175,6 +175,7 @@
     <ClCompile Include="src\Renderer\Texture.cpp" />
     <ClCompile Include="src\Renderer\VertexArray.cpp" />
     <ClCompile Include="src\Renderer\VertexBuffer.cpp" />
+    <ClCompile Include="src\UI\MaterialEditorPanel.cpp" />
     <ClCompile Include="src\UI\TextureNode.cpp" />
   </ItemGroup>
   <ItemGroup>

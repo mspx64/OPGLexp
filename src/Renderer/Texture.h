@@ -12,33 +12,22 @@ namespace lgt {
 
 enum class TextureType {
     BASE_COLOR,
-    NORMAL
+    NORMAL,
+    METALNESS,
+    ROUGHNESS,
+    AMBIENT_OCCLUSION,
+    EMISSIVE
 };
 
 struct SamplerState {
-    GLenum wrapMode  = GL_REPEAT;
-    GLenum minFilter = GL_LINEAR_MIPMAP_LINEAR;
+    GLenum wrapModeS = GL_REPEAT; // Horizontal axis (U)
+    GLenum wrapModeT = GL_REPEAT; // Vertical axis (V)
+    GLenum minFilter = GL_LINEAR;
     GLenum magFilter = GL_LINEAR;
 
     bool operator==(const SamplerState& other) const {
-        return wrapMode == other.wrapMode && minFilter == other.minFilter && magFilter == other.magFilter;
-    }
-};
-
-struct SamplerStateHash {
-    std::size_t operator()(const SamplerState& s) const {
-        std::size_t hash = 0;
-
-        // A standard hash combining magic number (phi) to prevent collisions
-        auto hash_combine = [&hash](GLuint value) {
-            hash ^= std::hash<GLuint>{}(value) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-        };
-
-        hash_combine(s.wrapMode);
-        hash_combine(s.minFilter);
-        hash_combine(s.magFilter);
-
-        return hash;
+        return wrapModeS == other.wrapModeS && wrapModeT == other.wrapModeT && minFilter == other.minFilter &&
+               magFilter == other.magFilter;
     }
 };
 
@@ -63,8 +52,7 @@ struct Texture {
     GLuint handle;
 };
 
-extern std::unordered_map<std::string, Texture>                   g_Textures;
-extern std::unordered_map<SamplerState, GLuint, SamplerStateHash> g_SamplerCache;
+extern std::unordered_map<std::string, Texture> g_Textures;
 
 Texture  GetTexture(const std::string& textureId);
 Texture  CreateTexture(const TextureDesc& desc);

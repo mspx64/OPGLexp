@@ -84,9 +84,10 @@ void main(){
 	  vec3 Normal = normalize(TBN * normaltexture.rgb * 2.0 - 1.0);
 
    out_color = basetexture;
-   //out_color = vec4(Textcoord , 1.0 , 1.0);
-   //out_color = vec4( normaltexture.rgb * basetexture.rgb, basetexture.a);
-   //out_color = vec4(max(dot(lightPos,Normal) , 0.0f)  * basetexture.rgb, basetexture.a);
+    // out_color = vec4(Textcoord , 1.0 , 1.0);
+     
+	//out_color = vec4( normaltexture.rgb * basetexture.rgb, basetexture.a);
+ //  out_color = vec4(max(dot(lightPos,Normal) , 0.0f)  * basetexture.rgb, basetexture.a);
    //out_color = vec4(max(dot(lightPos,Normal) , 0.0f)*materials[(u_MaterialIndex)].baseColor.rgb, 1.0);
 }    
   

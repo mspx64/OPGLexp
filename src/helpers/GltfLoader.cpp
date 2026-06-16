@@ -12,42 +12,58 @@
 
 namespace loader::assimp {
 
+struct TextureMapping {
+    aiTextureType    assimpType;
+    lgt::TextureType engineType;
+};
+
+const std::vector<TextureMapping> g_PBRMappings = {{aiTextureType_BASE_COLOR, lgt::TextureType::BASE_COLOR},
+                                                   {aiTextureType_NORMALS, lgt::TextureType::NORMAL},
+                                                   {aiTextureType_METALNESS, lgt::TextureType::METALNESS},
+                                                   {aiTextureType_DIFFUSE_ROUGHNESS, lgt::TextureType::ROUGHNESS},
+                                                   {aiTextureType_AMBIENT_OCCLUSION, lgt::TextureType::AMBIENT_OCCLUSION},
+                                                   {aiTextureType_EMISSIVE, lgt::TextureType::EMISSIVE}};
+
 bool ProcaessMaterials(const aiScene* scene, const std::string& dir) {
-
     for (int i = 0; i < scene->mNumMaterials; ++i) {
-
         auto* mat = scene->mMaterials[i];
         ASSERT(mat);
-        auto it = lgt::g_MaterialBRDF.find(mat->GetName().C_Str());
 
+        auto it = lgt::g_MaterialBRDF.find(mat->GetName().C_Str());
         if (it != lgt::g_MaterialBRDF.end())
             continue;
 
-        // TODO this is very poorly written code as i dont have much time
-        //  refactor it
-        aiTextureMapMode  mapMode[3];
         lgt::MaterialBRDF materialBrdf{};
-        materialBrdf.textures.resize(1);
-        materialBrdf.textures[0].type      = lgt::TextureType::BASE_COLOR;
-        materialBrdf.textures[0].textureId = LoadTexture(mat, scene, mapMode, aiTextureType_BASE_COLOR, dir);
-        if (materialBrdf.textures[0].textureId != std::string("INVALID_TEXTURE")) {
-            materialBrdf.textures[0].textureHandle         = lgt::GetTexture(materialBrdf.textures[0].textureId).handle;
-            materialBrdf.textures[0].samplerState.wrapMode = MapAssimpWrapMode(mapMode[0]);
 
-            // defaults
-            materialBrdf.textures[0].samplerState.minFilter = GL_LINEAR_MIPMAP_LINEAR;
-            materialBrdf.textures[0].samplerState.magFilter = GL_LINEAR;
+        for (const auto& mapping : g_PBRMappings) {
 
-            materialBrdf.textures[0].bindlessHandle = lgt::GetBindlessTextureSamplerHandle(materialBrdf.textures[0].textureHandle,
-                                                                                           materialBrdf.textures[0].samplerState);
+            unsigned int textureIndex = 0;
+            if (mat->GetTextureCount(mapping.assimpType) > 0) {
 
-            // add it to the global cpu side gpu material buffer
-            materialBrdf.gpuIndex = lgt::g_MaterialGPU.size();
-            lgt::g_MaterialGPU.push_back(std::move(materialBrdf.ToMaterialGPU()));
+                aiTextureMapMode mapModes[3] = {aiTextureMapMode_Wrap, aiTextureMapMode_Wrap, aiTextureMapMode_Wrap};
 
-            // add it to the globle cpu Material storage
-            lgt::g_MaterialBRDF[mat->GetName().C_Str()] = std::move(materialBrdf);
+                std::string textureId = LoadTexture(mat, scene, mapModes, mapping.assimpType, dir);
+
+                if (textureId != "INVALID_TEXTURE") {
+                    lgt::MaterialTextureAccess texInfo{};
+                    texInfo.type          = mapping.engineType;
+                    texInfo.textureId     = textureId;
+                    texInfo.textureHandle = lgt::GetTexture(textureId).handle;
+
+                    texInfo.samplerState.wrapModeS = MapAssimpWrapMode(mapModes[0]);
+                    texInfo.samplerState.wrapModeT = MapAssimpWrapMode(mapModes[1]);
+                    texInfo.samplerState.minFilter = GL_LINEAR_MIPMAP_LINEAR; // mipmaps for performance/quality
+                    texInfo.samplerState.magFilter = GL_LINEAR;
+
+                    texInfo.bindlessHandle = lgt::GetBindlessTextureSamplerHandle(texInfo.textureHandle, texInfo.samplerState);
+                    materialBrdf.textures.push_back(std::move(texInfo));
+                }
+            }
         }
+
+        materialBrdf.gpuIndex = lgt::g_MaterialGPU.size();
+        lgt::g_MaterialGPU.push_back(std::move(materialBrdf.ToMaterialGPU()));
+        lgt::g_MaterialBRDF[mat->GetName().C_Str()] = std::move(materialBrdf);
     }
 
     return scene->HasMaterials();
@@ -112,6 +128,7 @@ LoadTexture(aiMaterial* mat, const aiScene* scene, aiTextureMapMode* mapMode, ai
     void*                 data  = nullptr;
     int                   width = 0, height = 0, channels;
     std::filesystem::path texturePath;
+    std::string           textureId;
 
     if (mat->GetTexture(type, 0, &textureName, nullptr, nullptr, nullptr, nullptr, mapMode) != AI_SUCCESS) {
         CORE_ERROR("Material {} has no texture of type {}", mat->GetName().C_Str(), TextureTypeToString(type));
@@ -119,9 +136,11 @@ LoadTexture(aiMaterial* mat, const aiScene* scene, aiTextureMapMode* mapMode, ai
     }
 
     texturePath = std::filesystem::path(dir) / std::filesystem::path(textureName.C_Str()).filename();
-    auto it     = lgt::g_Textures.find(texturePath.string());
+    textureId   = texturePath.lexically_normal().string();
+
+    auto it = lgt::g_Textures.find(textureId);
     if (it != lgt::g_Textures.end())
-        return texturePath.string();
+        return textureId;
 
     const aiTexture* embeddedTex = scene->GetEmbeddedTexture(textureName.C_Str());
 
@@ -138,25 +157,26 @@ LoadTexture(aiMaterial* mat, const aiScene* scene, aiTextureMapMode* mapMode, ai
                                          4);
         }
     } else {
-        data = stbi_load(texturePath.string().c_str(), &width, &height, &channels, 4);
+        data = stbi_load(textureId.c_str(), &width, &height, &channels, 4);
     }
 
     if (data) {
         lgt::TextureDesc desc{};
-        desc.data     = data;
-        desc.width    = width;
-        desc.height   = height;
-        desc.channels = 4;
+        desc.data         = data;
+        desc.width        = width;
+        desc.height       = height;
+        desc.generateMips = true;
+        desc.channels     = 4;
 
-        lgt::Texture new_texture              = lgt::CreateTexture(desc);
-        lgt::g_Textures[texturePath.string()] = std::move(new_texture);
+        lgt::Texture new_texture   = lgt::CreateTexture(desc);
+        lgt::g_Textures[textureId] = std::move(new_texture);
 
         stbi_image_free(data);
-        CORE_INFO("Loaded Texture {}", texturePath.string());
-        return texturePath.string();
+        CORE_INFO("Loaded Texture {}", textureId);
+        return textureId;
     }
 
-    CORE_ERROR("stb_image : failed to laod the texture -> {}", texturePath.string());
+    CORE_ERROR("stb_image : failed to laod the texture -> {}", textureId);
     return std::string("INVALID_TEXTURE");
 }
 

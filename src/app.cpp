@@ -69,6 +69,8 @@ void main() {
         ImGui::NewFrame();
 
         Editor::DrawTextureSamplerNode(lgt::g_Textures.begin()->first, lgt::g_Textures.begin()->second);
+        Editor::DrawMaterialEditorPanel();
+
         ImGui::Render();
 
         renderer.render();

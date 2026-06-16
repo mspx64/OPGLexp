@@ -40,6 +40,10 @@ struct MaterialBRDF {
             case TextureType::BASE_COLOR:
                 result.baseColorMap = texAccess.bindlessHandle;
                 break;
+
+            case TextureType::NORMAL:
+                result.normalMap = texAccess.bindlessHandle;
+                break;
             // TODO add the remaining textures
             default:
                 break;
@@ -51,5 +55,7 @@ struct MaterialBRDF {
 
 extern std::vector<MaterialGPU>                       g_MaterialGPU;
 extern std ::unordered_map<std::string, MaterialBRDF> g_MaterialBRDF;
+
+void UpateMaterial(uint32_t index, MaterialGPU data);
 
 } // namespace lgt
