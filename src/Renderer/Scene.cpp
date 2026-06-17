@@ -94,43 +94,6 @@ static const char* TextureTypeToString(aiTextureType type) {
     }
 }
 
-void Scene::processMaterials(const aiScene* scene, const std::string& dir) {
-
-    m_materialBuffer.resize(scene->mNumMaterials);
-
-    for (unsigned int i = 0; i < 1; i++) {
-
-        aiMaterial* mat = scene->mMaterials[i];
-
-        for (int type = 0; type <= aiTextureType_UNKNOWN; type++) {
-            aiTextureType texType = (aiTextureType)type;
-
-            unsigned int count = mat->GetTextureCount(texType);
-
-            if (count == 0)
-                continue;
-
-            aiString path;
-
-            mat->GetTexture(texType, 0, &path);
-
-            CORE_INFO("Type :{} -> path : {}", std::string(TextureTypeToString(texType)), path.C_Str());
-        }
-
-        MaterialGPU& gpuMat = m_materialBuffer[i];
-
-        aiColor4D baseColor;
-        if (AI_SUCCESS == aiGetMaterialColor(mat, AI_MATKEY_BASE_COLOR, &baseColor)) {
-            gpuMat.baseColor = glm::vec4(baseColor.r, baseColor.g, baseColor.b, baseColor.a);
-        }
-
-        gpuMat.baseColor = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f);
-
-        auto textureid = loader::assimp::LoadTexture(mat, scene, nullptr, aiTextureType_BASE_COLOR, dir);
-        //  gpuMat.diffuseMap = g_Textures[textureid].bindlessHandle;
-    }
-}
-
 std::shared_ptr<SceneNode> Scene::parseNode(aiNode* node, const aiScene* scene) {
 
     auto sceneNode  = std::make_shared<SceneNode>();

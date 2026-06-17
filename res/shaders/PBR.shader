@@ -44,15 +44,16 @@ void main (){
 vec3 lightColor = vec3(1.0f, 1.0f, 1.0f);
 
 struct Material {
-    vec4 specularColor;
-    vec4 diffuseColor;
-    vec4 emmisiveCOlor; // Fixed typo if matching C++
     vec4 baseColor;
+    vec4 emmisiveColor;
+
     float roughness;
-    float metalic;
-    sampler2D normalMap;
-    sampler2D diffuseMap;
-    sampler2D metallicRoughnessMap;
+    float metallic;
+    float emmisiveStrength;
+
+    sampler2D  normalMap;
+    sampler2D  diffuseMap;
+    sampler2D  emmisiveMap;
 };
 
 layout(location = 0) in vec3 TangentLightDir;
@@ -69,48 +70,67 @@ uniform int u_MaterialIndex;
 uniform int u_DebugMode;
 
 
-float GGX(float roughness, float cosNH){
+float GGX( float NdotH , float roughness){
     float roughness2 = roughness * roughness ;   
-    float denom = ((cosNH * cosNH * (roughness2 - 1.0)) + 1.0);
-    float result = roughness2/ (3.14159265 * denom * denom);
-    return result;
+    float denom = ((NdotH * NdotH * (roughness2 - 1.0)) + 1.0);
+    return roughness2/ (3.14159265 * denom * denom);
 }
 
-float Fschlick(float F0 , float F90 , float cosTheta){
-    return mix(F0 , F90 , pow(1.0f - cosTheta ,5));
+float Fschlick(float F0, float HdotV) {
+    return F0 + (1.0 - F0) * pow(clamp(1.0 - HdotV, 0.0, 1.0), 5.0);
 }
 
-float DisneyDiffuse(float roughness , vec3 L , vec3 V , vec3 N , vec3 H){
-//TODO    
-return 0.0f ;
+float DisneyDiffuse(float NdotL , float LdotV ,float LdotH, float roughness ){
+float F90 = 0.5 + 2 * (roughness * LdotH * LdotH);
+float F0 = 1.0f;
+float diffuse = mix(F0 , F90 ,NdotL) * mix(F0 , F90 ,LdotV);
+return  diffuse/3.14159265;
 }
 
- float GeometrySmith_HeightCorrelated(float NdotV, float NdotL, float roughness) {
+float SmithGGX(float NdotV, float NdotL, float roughness) {
     float a = roughness * roughness;
     float a2 = a * a;
 
-    float GGXV = NdotL * sqrt(NdotV * NdotV * (1.0 - a2) + a2);
-    float GGXL = NdotV * sqrt(NdotL * NdotL * (1.0 - a2) + a2);
+    float GGXL = NdotV * sqrt(a2 + NdotL * (NdotL - a2 * NdotL));
+    float GGXV = NdotL * sqrt(a2 + NdotV * (NdotV - a2 * NdotV));
 
     return 0.5 / (GGXV + GGXL);
 }
 
 void main(){
-    vec4 basetexture = texture(materials[u_MaterialIndex].diffuseMap, Textcoord);
-    
-    vec3 normaltexture = texture(materials[u_MaterialIndex].normalMap, Textcoord).rgb;
 
-    vec3 N = normalize(normaltexture * 2.0 - 1.0);
+    float roughness = clamp(materials[u_MaterialIndex].roughness, 0.05, 1.0);
+    float metallic  = materials[u_MaterialIndex].metallic;
+
+    vec4 albedo   = texture(materials[u_MaterialIndex].diffuseMap, Textcoord) * materials[u_MaterialIndex].baseColor;
+    vec4 emmisive = texture(materials[u_MaterialIndex].emmisiveMap, Textcoord) * materials[u_MaterialIndex].emmisiveColor;
+
+    vec3 normal = texture(materials[u_MaterialIndex].normalMap, Textcoord).rgb;
+
+    vec3 N = normalize(normal * 2.0 - 1.0);
     vec3 L = normalize(TangentLightDir);
     vec3 V = normalize(TangentViewDir);
     vec3 H = normalize(L + V);
 
-    /*NdotL  , NdotH , NdotV*/
-    float NdotL = dot(N, L);
-    float NdotH = dot(N, H);
-    float NdotV = dot(N,V);
+    float NdotL = clamp(dot(N, L), 0.0, 1.0);
+    float NdotV = clamp(dot(N, V), 0.0, 1.0);
+    float NdotH = clamp(dot(N, H), 0.0, 1.0);
+    float LdotV = clamp(dot(L, V), 0.0, 1.0);
+    float LdotH = clamp(dot(L, H), 0.0, 1.0);
 
-    // float specular =  GGX(materials[u_MaterialIndex].roughness, cosNH);
-    // out_color = vec4((basetexture.rgb * cosNL) + (vec3(specular) * 0.1), basetexture.a);
-     out_color = vec4( vec3(GeometrySmith_HeightCorrelated(NdotV , NdotL ,materials[u_MaterialIndex].roughness ) ), 1.0f );
+    float D = GGX(NdotH, roughness);
+    float G = SmithGGX(NdotV, NdotL, roughness);
+
+    vec3 F0 = mix(vec3(0.04), albedo.rgb, metallic); 
+    vec3 F  = vec3(Fschlick(F0.r, LdotH)); 
+
+    vec3 specularTerm = D * G * F; 
+    float diff = DisneyDiffuse(NdotL, NdotV, LdotH, roughness);
+    vec3 diffuseTerm = albedo.rgb * diff;
+
+    vec3 kd = (vec3(1.0) - F) * (1.0 - metallic);
+    vec3 finalColor = (kd * diffuseTerm + specularTerm) * lightColor * NdotL;
+
+    finalColor += emmisive.rgb * materials[u_MaterialIndex].emmisiveStrength;
+    out_color = vec4(finalColor, albedo.a);
 }

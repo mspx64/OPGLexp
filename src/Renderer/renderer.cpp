@@ -493,7 +493,6 @@ void Renderer::renderNode(SceneNode* node) {
     testPipeline->setMat4("u_Model", node->globalTransform);
 
     for (auto& mesh : node->meshes) {
-
         testPipeline->setMaterial(mesh.materialIndex);
         glBindVertexArray(mesh.vao);
         glDrawElements(GL_TRIANGLES, mesh.indexCount, GL_UNSIGNED_INT, 0);

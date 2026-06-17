@@ -45,7 +45,7 @@ struct Vertex {
 
 struct Mesh {
     GLuint   vao, vbo, ibo;
-    uint32_t indexCount;
+    size_t   indexCount;
     uint32_t materialIndex;
 
     void setup(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, uint32_t matIdx) {

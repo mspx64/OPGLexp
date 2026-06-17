@@ -1,5 +1,3 @@
-
-
 #include "Renderer/Material.h"
 #include "Editor.h"
 
@@ -19,7 +17,6 @@ void DrawMaterialEditorPanel() {
         return;
     }
 
-    // Set an initial selection if blank
     if (selectedMaterialName.empty() || lgt::g_MaterialBRDF.find(selectedMaterialName) == lgt::g_MaterialBRDF.end()) {
         selectedMaterialName = lgt::g_MaterialBRDF.begin()->first;
     }
@@ -52,17 +49,16 @@ void DrawMaterialEditorPanel() {
     if (ImGui::CollapsingHeader("PBR Colors & Factors", ImGuiTreeNodeFlags_DefaultOpen)) {
         if (ImGui::ColorEdit4("Base Color", &currentGPUData.baseColor.x))
             trackChanges = true;
-        if (ImGui::ColorEdit4("Emissive Color", &currentGPUData.emmisiveCOlor.x))
-            trackChanges = true;
-        if (ImGui::ColorEdit4("Specular Color", &currentGPUData.specularColor.x))
-            trackChanges = true;
-        if (ImGui::ColorEdit4("Diffuse Color", &currentGPUData.diffuseColor.x))
+        if (ImGui::ColorEdit4("Emissive Color", &currentGPUData.emmisiveColor.x))
             trackChanges = true;
 
         ImGui::Spacing();
         if (ImGui::SliderFloat("Roughness", &currentGPUData.roughness, 0.0f, 1.0f))
             trackChanges = true;
-        if (ImGui::SliderFloat("Metalic", &currentGPUData.metalic, 0.0f, 1.0f))
+        if (ImGui::SliderFloat("Metallic", &currentGPUData.metallic, 0.0f, 1.0f))
+            trackChanges = true;
+        if (ImGui::SliderFloat(
+                "Emissive Strength", &currentGPUData.emmisiveStrength, 0.0f, 20.0f)) // Scaled slider for intensity blooming
             trackChanges = true;
     }
 
@@ -77,12 +73,11 @@ void DrawMaterialEditorPanel() {
             }
         };
 
-        displayTextureSlot("Base Color Map", currentGPUData.baseColorMap);
+        displayTextureSlot("Base Color Map", currentGPUData.diffuseMap);
         displayTextureSlot("Normal Map", currentGPUData.normalMap);
-        displayTextureSlot("Metallic Roughness", currentGPUData.metallicRoughnessMap);
+        displayTextureSlot("Emissive Map", currentGPUData.emmisiveMap);
     }
 
-    // 5. Per-Texture Sampler Modifiers
     if (ImGui::CollapsingHeader("Texture Sampler")) {
         for (size_t i = 0; i < activeBRDF.textures.size(); ++i) {
             auto& tex = activeBRDF.textures[i];
@@ -92,7 +87,6 @@ void DrawMaterialEditorPanel() {
 
                 ImGui::Text("Texture Handle: %u", tex.textureHandle);
 
-                // Read-only sampler lookups for your debugging sanity
                 auto getWrapStr = [](GLenum mode) {
                     if (mode == GL_REPEAT)
                         return "REPEAT";
@@ -114,7 +108,6 @@ void DrawMaterialEditorPanel() {
 
     if (trackChanges) {
         lgt::g_MaterialGPU[gpuIndex] = currentGPUData;
-        // Push update notification down to your engine implementation
         lgt::UpateMaterial(gpuIndex, currentGPUData);
     }
 

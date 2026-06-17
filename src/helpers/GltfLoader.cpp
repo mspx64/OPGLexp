@@ -26,7 +26,7 @@ const std::vector<TextureMapping> g_PBRMappings = {{aiTextureType_BASE_COLOR, lg
                                                    {aiTextureType_EMISSIVE, lgt::TextureType::EMISSIVE}};
 
 bool ProcaessMaterials(const aiScene* scene, const std::string& dir) {
-    for (int i = 0; i < scene->mNumMaterials; ++i) {
+    for (unsigned int i = 0; i < scene->mNumMaterials; ++i) {
         auto* mat = scene->mMaterials[i];
         ASSERT(mat);
 
@@ -36,14 +36,43 @@ bool ProcaessMaterials(const aiScene* scene, const std::string& dir) {
 
         lgt::MaterialBRDF materialBrdf{};
 
+        aiColor4D color;
+        float     value;
+
+        if (mat->Get(AI_MATKEY_COLOR_DIFFUSE, color) == AI_SUCCESS) {
+            materialBrdf.baseColor = glm::vec4(color.r, color.g, color.b, color.a);
+        } else {
+            materialBrdf.baseColor = glm::vec4(1.0f);
+        }
+
+        if (mat->Get(AI_MATKEY_COLOR_EMISSIVE, color) == AI_SUCCESS) {
+            materialBrdf.emmisiveColor = glm::vec4(color.r, color.g, color.b, color.a);
+        } else {
+            materialBrdf.emmisiveColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+        }
+
+        if (mat->Get(AI_MATKEY_ROUGHNESS_FACTOR, value) == AI_SUCCESS) {
+            materialBrdf.roughness = value;
+        } else {
+            materialBrdf.roughness = 0.5f;
+        }
+
+        if (mat->Get(AI_MATKEY_METALLIC_FACTOR, value) == AI_SUCCESS) {
+            materialBrdf.metallic = value;
+        } else {
+            materialBrdf.metallic = 0.0f;
+        }
+
+        if (mat->Get(AI_MATKEY_EMISSIVE_INTENSITY, value) == AI_SUCCESS) {
+            materialBrdf.emmisiveStrength = value;
+        } else {
+            materialBrdf.emmisiveStrength = 0.0f;
+        }
+
         for (const auto& mapping : g_PBRMappings) {
-
-            unsigned int textureIndex = 0;
             if (mat->GetTextureCount(mapping.assimpType) > 0) {
-
                 aiTextureMapMode mapModes[3] = {aiTextureMapMode_Wrap, aiTextureMapMode_Wrap, aiTextureMapMode_Wrap};
-
-                std::string textureId = LoadTexture(mat, scene, mapModes, mapping.assimpType, dir);
+                std::string      textureId   = LoadTexture(mat, scene, mapModes, mapping.assimpType, dir);
 
                 if (textureId != "INVALID_TEXTURE") {
                     lgt::MaterialTextureAccess texInfo{};
@@ -53,7 +82,7 @@ bool ProcaessMaterials(const aiScene* scene, const std::string& dir) {
 
                     texInfo.samplerState.wrapModeS = MapAssimpWrapMode(mapModes[0]);
                     texInfo.samplerState.wrapModeT = MapAssimpWrapMode(mapModes[1]);
-                    texInfo.samplerState.minFilter = GL_LINEAR_MIPMAP_LINEAR; // mipmaps for performance/quality
+                    texInfo.samplerState.minFilter = GL_LINEAR_MIPMAP_LINEAR;
                     texInfo.samplerState.magFilter = GL_LINEAR;
 
                     texInfo.bindlessHandle = lgt::GetBindlessTextureSamplerHandle(texInfo.textureHandle, texInfo.samplerState);
@@ -69,7 +98,6 @@ bool ProcaessMaterials(const aiScene* scene, const std::string& dir) {
 
     return scene->HasMaterials();
 }
-
 static const char* TextureTypeToString(aiTextureType type) {
     switch (type) {
     case aiTextureType_NONE:

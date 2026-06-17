@@ -35,7 +35,7 @@ void main() {
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("# version 460");
 
-    // glEnable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_DEPTH_TEST);
@@ -46,8 +46,8 @@ void main() {
     lgt::Scene  scene;
     lgt::Camera camera((int)width, (int)height, glm::vec3(0.0f));
 
-    // scene.LoadGltf("res/modles/Lanten/lantern_fbx.fbx");
-    scene.LoadGltf("res/modles/Helmet/DamagedHelmet.gltf");
+    scene.LoadGltf("res/modles/Lanten/lantern_fbx.fbx");
+    // scene.LoadGltf("res/modles/Helmet/DamagedHelmet.gltf");
     // scene.LoadGltf("res/modles/sopnza_palace/sponza_palace.gltf");
 
     lgt::Renderer renderer(&scene, &camera);
@@ -69,7 +69,6 @@ void main() {
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        Editor::DrawTextureSamplerNode(lgt::g_Textures.begin()->first, lgt::g_Textures.begin()->second);
         Editor::DrawMaterialEditorPanel();
 
         ImGui::Render();
