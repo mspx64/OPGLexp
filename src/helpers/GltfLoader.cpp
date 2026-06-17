@@ -22,6 +22,7 @@ const std::vector<TextureMapping> g_PBRMappings = {{aiTextureType_BASE_COLOR, lg
                                                    {aiTextureType_METALNESS, lgt::TextureType::METALNESS},
                                                    {aiTextureType_DIFFUSE_ROUGHNESS, lgt::TextureType::ROUGHNESS},
                                                    {aiTextureType_AMBIENT_OCCLUSION, lgt::TextureType::AMBIENT_OCCLUSION},
+                                                   {aiTextureType_NORMAL_CAMERA, lgt::TextureType::NORMAL},
                                                    {aiTextureType_EMISSIVE, lgt::TextureType::EMISSIVE}};
 
 bool ProcaessMaterials(const aiScene* scene, const std::string& dir) {
@@ -135,8 +136,14 @@ LoadTexture(aiMaterial* mat, const aiScene* scene, aiTextureMapMode* mapMode, ai
         return "INVALID_TEXTURE";
     }
 
-    texturePath = std::filesystem::path(dir) / std::filesystem::path(textureName.C_Str()).filename();
-    textureId   = texturePath.lexically_normal().string();
+    std::filesystem::path rawPath(textureName.C_Str());
+
+    if (rawPath.is_absolute()) {
+        texturePath = rawPath;
+    } else {
+        texturePath = std::filesystem::path(dir) / rawPath;
+    }
+    textureId = texturePath.lexically_normal().string();
 
     auto it = lgt::g_Textures.find(textureId);
     if (it != lgt::g_Textures.end())
@@ -177,7 +184,7 @@ LoadTexture(aiMaterial* mat, const aiScene* scene, aiTextureMapMode* mapMode, ai
     }
 
     CORE_ERROR("stb_image : failed to laod the texture -> {}", textureId);
-    return std::string("INVALID_TEXTURE");
+    return "INVALID_TEXTURE";
 }
 
 } // namespace loader::assimp

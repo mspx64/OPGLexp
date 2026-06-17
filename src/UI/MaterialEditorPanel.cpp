@@ -26,8 +26,10 @@ void DrawMaterialEditorPanel() {
 
     if (ImGui::BeginCombo("Active Material", selectedMaterialName.c_str())) {
         for (const auto& [name, brdf] : lgt::g_MaterialBRDF) {
-            bool isSelected = (selectedMaterialName == name);
-            if (ImGui::Selectable(name.c_str(), isSelected)) {
+            bool        isSelected  = (selectedMaterialName == name);
+            std::string displayName = name.empty() ? "Unnamed Material" : name;
+            std::string uniqueLabel = displayName + "##mat_" + std::to_string(brdf.gpuIndex);
+            if (ImGui::Selectable(uniqueLabel.c_str(), isSelected)) {
                 selectedMaterialName = name;
             }
             if (isSelected) {
@@ -58,9 +60,9 @@ void DrawMaterialEditorPanel() {
             trackChanges = true;
 
         ImGui::Spacing();
-        if (ImGui::SliderFloat("Transparency Factor", &currentGPUData.tansperancyFactor, 0.0f, 1.0f))
+        if (ImGui::SliderFloat("Roughness", &currentGPUData.roughness, 0.0f, 1.0f))
             trackChanges = true;
-        if (ImGui::SliderFloat("Alpha Test Threshold", &currentGPUData.alphaTest, 0.0f, 1.0f))
+        if (ImGui::SliderFloat("Metalic", &currentGPUData.metalic, 0.0f, 1.0f))
             trackChanges = true;
     }
 

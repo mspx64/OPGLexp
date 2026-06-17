@@ -290,21 +290,21 @@ void Renderer::setScene(Scene* Scene) {
 }
 
 void Renderer::createMaterailBuffer(size_t size) {
-    glCreateBuffers(1, &materialSSBO);
-    glNamedBufferStorage(materialSSBO, size * sizeof(MaterialGPU), nullptr, GL_DYNAMIC_STORAGE_BIT);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, materialSSBO);
+    glCreateBuffers(1, &g_MaterialSSBO);
+    glNamedBufferStorage(g_MaterialSSBO, size * sizeof(MaterialGPU), nullptr, GL_DYNAMIC_STORAGE_BIT);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, g_MaterialSSBO);
 }
 
 void Renderer::uploadMaterialBuffer(MaterialGPU* data, size_t size) {
-    glNamedBufferSubData(materialSSBO, 0, size * sizeof(MaterialGPU), data);
+    glNamedBufferSubData(g_MaterialSSBO, 0, size * sizeof(MaterialGPU), data);
 }
 
 void Renderer::updateMaterial(const MaterialGPU& mat, uint32_t index) {
-    glNamedBufferSubData(materialSSBO, index * sizeof(MaterialGPU), sizeof(MaterialGPU), &mat);
+    glNamedBufferSubData(g_MaterialSSBO, index * sizeof(MaterialGPU), sizeof(MaterialGPU), &mat);
 }
 
 void Renderer::updateDirtyRange(MaterialGPU* data, size_t offset, size_t count) {
-    glNamedBufferSubData(materialSSBO, offset * sizeof(MaterialGPU), sizeof(MaterialGPU), data);
+    glNamedBufferSubData(g_MaterialSSBO, offset * sizeof(MaterialGPU), sizeof(MaterialGPU), data);
 }
 
 void Renderer::Initauad() {

@@ -7,13 +7,13 @@ namespace lgt {
 
 struct alignas(16) MaterialGPU {
 
+    glm::vec4 baseColor;
     glm::vec4 specularColor;
     glm::vec4 diffuseColor;
     glm::vec4 emmisiveCOlor;
-    glm::vec4 baseColor;
 
-    float tansperancyFactor;
-    float alphaTest;
+    float roughness = 1;
+    float metalic   = 0;
 
     GLuint64 normalMap;
     GLuint64 baseColorMap;
@@ -31,6 +31,8 @@ struct MaterialTextureAccess {
 struct MaterialBRDF {
     uint32_t gpuIndex = 0;
     /*TODO add the remaining PBR parrameters*/
+
+    float                              roughness = 0;
     std::vector<MaterialTextureAccess> textures;
 
     MaterialGPU ToMaterialGPU() {
@@ -52,7 +54,7 @@ struct MaterialBRDF {
         return result;
     }
 };
-
+extern GLuint                                         g_MaterialSSBO;
 extern std::vector<MaterialGPU>                       g_MaterialGPU;
 extern std ::unordered_map<std::string, MaterialBRDF> g_MaterialBRDF;
 

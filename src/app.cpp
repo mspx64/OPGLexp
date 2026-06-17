@@ -26,7 +26,7 @@ void main() {
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         CORE_ERROR("Failed to initialize GLAD");
     }
-    enableReportGlErrors();
+    // enableReportGlErrors();
     glfwSwapInterval(0);
 
     IMGUI_CHECKVERSION();
@@ -48,6 +48,7 @@ void main() {
 
     // scene.LoadGltf("res/modles/Lanten/lantern_fbx.fbx");
     scene.LoadGltf("res/modles/Helmet/DamagedHelmet.gltf");
+    // scene.LoadGltf("res/modles/sopnza_palace/sponza_palace.gltf");
 
     lgt::Renderer renderer(&scene, &camera);
 

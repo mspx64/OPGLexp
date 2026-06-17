@@ -241,7 +241,6 @@ private:
 
     RenderId quadVAO = 0;
     RenderId quadVBO;
-    RenderId materialSSBO;
 
     // Render state
     RenderMode m_currentRenderMode;

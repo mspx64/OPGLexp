@@ -41,6 +41,7 @@ void Pipeline::useWithCamera(Camera& camera) {
     glUseProgram(m_RenderID);
     setMat4("u_View", camera.GetViewMatrix());
     setMat4("u_Projection", camera.GetProjectionMatrix());
+    setVec3("u_CameraPos", camera.GetCameraPos());
 }
 
 void Pipeline::unuse() const {

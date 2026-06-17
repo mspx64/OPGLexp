@@ -24,6 +24,7 @@
     <ProjectGuid>{110cee92-8311-4bc4-8478-85558ab4428c}</ProjectGuid>
     <RootNamespace>Demorendering</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>OPGLexp</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
