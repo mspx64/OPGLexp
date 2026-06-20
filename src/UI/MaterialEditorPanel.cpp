@@ -10,24 +10,44 @@ namespace Editor {
 void DrawMaterialEditorPanel() {
     ImGui::Begin("Material Editor");
 
-    static std::string selectedMaterialName = "";
     if (lgt::g_MaterialBRDF.empty()) {
         ImGui::Text("No materials loaded in scene.");
         ImGui::End();
         return;
     }
 
-    if (selectedMaterialName.empty() || lgt::g_MaterialBRDF.find(selectedMaterialName) == lgt::g_MaterialBRDF.end()) {
+    static uint32_t selectedGpuIndex = 0xFFFFFFFF;
+    static bool     isInitialized    = false;
+
+    if (!isInitialized) {
+        selectedGpuIndex = lgt::g_MaterialBRDF.begin()->second.gpuIndex;
+        isInitialized    = true;
+    }
+
+    std::string selectedMaterialName = "";
+    bool        foundActive          = false;
+    for (const auto& [name, brdf] : lgt::g_MaterialBRDF) {
+        if (brdf.gpuIndex == selectedGpuIndex) {
+            selectedMaterialName = name;
+            foundActive          = true;
+            break;
+        }
+    }
+
+    if (!foundActive) {
+        selectedGpuIndex     = lgt::g_MaterialBRDF.begin()->second.gpuIndex;
         selectedMaterialName = lgt::g_MaterialBRDF.begin()->first;
     }
 
-    if (ImGui::BeginCombo("Active Material", selectedMaterialName.c_str())) {
+    std::string comboLabel = selectedMaterialName.empty() ? "Unnamed Material" : selectedMaterialName;
+    if (ImGui::BeginCombo("Active Material", comboLabel.c_str())) {
         for (const auto& [name, brdf] : lgt::g_MaterialBRDF) {
-            bool        isSelected  = (selectedMaterialName == name);
+            bool        isSelected  = (brdf.gpuIndex == selectedGpuIndex);
             std::string displayName = name.empty() ? "Unnamed Material" : name;
             std::string uniqueLabel = displayName + "##mat_" + std::to_string(brdf.gpuIndex);
+
             if (ImGui::Selectable(uniqueLabel.c_str(), isSelected)) {
-                selectedMaterialName = name;
+                selectedGpuIndex = brdf.gpuIndex;
             }
             if (isSelected) {
                 ImGui::SetItemDefaultFocus();
@@ -57,8 +77,7 @@ void DrawMaterialEditorPanel() {
             trackChanges = true;
         if (ImGui::SliderFloat("Metallic", &currentGPUData.metallic, 0.0f, 1.0f))
             trackChanges = true;
-        if (ImGui::SliderFloat(
-                "Emissive Strength", &currentGPUData.emmisiveStrength, 0.0f, 20.0f)) // Scaled slider for intensity blooming
+        if (ImGui::SliderFloat("Emissive Strength", &currentGPUData.emmisiveStrength, 0.0f, 20.0f))
             trackChanges = true;
     }
 

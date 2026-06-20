@@ -289,6 +289,11 @@ void Renderer::setScene(Scene* Scene) {
     scene_ = Scene;
 }
 
+void Renderer::setDebugMode(DebugMode mode) {
+    ASSERT(testPipeline);
+    testPipeline->setInt("u_DebugMode", (int)mode);
+}
+
 void Renderer::createMaterailBuffer(size_t size) {
     glCreateBuffers(1, &g_MaterialSSBO);
     glNamedBufferStorage(g_MaterialSSBO, size * sizeof(MaterialGPU), nullptr, GL_DYNAMIC_STORAGE_BIT);

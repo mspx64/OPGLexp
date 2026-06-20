@@ -69,7 +69,6 @@ layout(std430 , binding = 0) buffer Materials{
 uniform int u_MaterialIndex;
 uniform int u_DebugMode;
 
-
 float GGX( float NdotH , float roughness){
     float roughness2 = roughness * roughness ;   
     float denom = ((NdotH * NdotH * (roughness2 - 1.0)) + 1.0);
@@ -132,5 +131,52 @@ void main(){
     vec3 finalColor = (kd * diffuseTerm + specularTerm) * lightColor * NdotL;
 
     finalColor += emmisive.rgb * materials[u_MaterialIndex].emmisiveStrength;
-    out_color = vec4(finalColor, albedo.a);
+
+   
+    switch(u_DebugMode){
+        case 0:
+            out_color = vec4(texture(materials[u_MaterialIndex].diffuseMap, Textcoord).rgb, 1.0);
+            break;
+            
+        case 1: 
+            out_color = vec4(normal, 1.0);
+            break;
+            
+        case 2: 
+            out_color = vec4(texture(materials[u_MaterialIndex].emmisiveMap, Textcoord).rgb, 1.0);
+            break;
+            
+        case 3: 
+            out_color = vec4(N * 0.5 + 0.5, 1.0);
+            break;
+            
+        case 4: 
+            out_color = vec4(vec3(diff * NdotL), 1.0);
+            break;
+            
+        case 5:
+            out_color = vec4(diffuseTerm * NdotL, 1.0);
+            break;
+            
+        case 6:
+            out_color = vec4(specularTerm * NdotL, 1.0);
+            break;
+            
+        case 7: 
+            out_color = vec4(F, 1.0);
+            break;
+            
+        case 8: 
+            out_color = vec4(vec3(D), 1.0);
+            break;
+            
+        case 9: 
+            out_color = vec4(vec3(G), 1.0);
+            break;
+
+        case 10: 
+            out_color = vec4(finalColor, albedo.a);
+            break;
+    }
+
 }

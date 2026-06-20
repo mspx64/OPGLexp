@@ -26,6 +26,19 @@ const std::vector<TextureMapping> g_PBRMappings = {{aiTextureType_BASE_COLOR, lg
                                                    {aiTextureType_EMISSIVE, lgt::TextureType::EMISSIVE}};
 
 bool ProcaessMaterials(const aiScene* scene, const std::string& dir) {
+
+    unsigned char    color[] = {255, 255, 255};
+    lgt::TextureDesc desc{};
+    desc.data         = color;
+    desc.width        = 1;
+    desc.height       = 1;
+    desc.generateMips = false;
+    desc.channels     = 3;
+
+    auto        texture               = lgt::CreateTexture(desc);
+    std::string defaultTextureId      = "FALLBACK_TEXTURE_WHITE";
+    lgt::g_Textures[defaultTextureId] = std::move(texture);
+
     for (unsigned int i = 0; i < scene->mNumMaterials; ++i) {
         auto* mat = scene->mMaterials[i];
         ASSERT(mat);
@@ -88,6 +101,7 @@ bool ProcaessMaterials(const aiScene* scene, const std::string& dir) {
                     texInfo.bindlessHandle = lgt::GetBindlessTextureSamplerHandle(texInfo.textureHandle, texInfo.samplerState);
                     materialBrdf.textures.push_back(std::move(texInfo));
                 }
+            } else {
             }
         }
 

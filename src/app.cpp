@@ -26,7 +26,7 @@ void main() {
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         CORE_ERROR("Failed to initialize GLAD");
     }
-    // enableReportGlErrors();
+    enableReportGlErrors();
     glfwSwapInterval(0);
 
     IMGUI_CHECKVERSION();
@@ -48,11 +48,15 @@ void main() {
 
     scene.LoadGltf("res/modles/Lanten/lantern_fbx.fbx");
     // scene.LoadGltf("res/modles/Helmet/DamagedHelmet.gltf");
-    // scene.LoadGltf("res/modles/sopnza_palace/sponza_palace.gltf");
+    //  scene.LoadGltf("res/modles/sopnza_palace/sponza_palace.gltf");
+    //  scene.LoadGltf("res/modles/car/scene.gltf");
 
+    int           currentMode = 0;
     lgt::Renderer renderer(&scene, &camera);
-
     renderer.init();
+
+    bool rKeyWasPressed = false;
+    bool fKeyWasPressed = false;
 
     // game loopx
     while (!glfwWindowShouldClose(window)) {
@@ -72,16 +76,22 @@ void main() {
         Editor::DrawMaterialEditorPanel();
 
         ImGui::Render();
-
         renderer.render();
 
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-        if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
-
+        if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS && !rKeyWasPressed) {
             renderer.shutdown();
             renderer.init();
-        }
+            rKeyWasPressed = true;
+        } else if (glfwGetKey(window, GLFW_KEY_R) == GLFW_RELEASE && rKeyWasPressed)
+            rKeyWasPressed = false;
+        if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS && !fKeyWasPressed) {
+            currentMode = (currentMode + 1) % 11;
+            renderer.setDebugMode((lgt::DebugMode)(currentMode));
+            fKeyWasPressed = true;
+        } else if (glfwGetKey(window, GLFW_KEY_F) == GLFW_RELEASE && fKeyWasPressed)
+            fKeyWasPressed = false;
 
         glfwSwapBuffers(window);
     }

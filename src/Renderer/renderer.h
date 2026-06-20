@@ -36,6 +36,22 @@ class Scene;
 struct SceneNode;
 using RenderId = unsigned int;
 
+enum class DebugMode {
+    BASE_COLOR_TEXTURE,
+    NORMAL_TEXTURE,
+    EMMISIVE_TEXTURE,
+
+    NORMALS_MAPPED,
+    DIFFUSE,
+    DIFFUSE_ALBEDO,
+    SPECULAR,
+
+    FSCHLICK,
+    GGX,
+    SMITHGGX,
+    FINAL_COLOR
+};
+
 struct Vertex {
     glm::vec3 position;
     glm::vec3 normal;
@@ -210,6 +226,7 @@ public:
     void setViewport(int width, int height);
     void setCamera(Camera* camera);
     void setScene(Scene* Scene);
+    void setDebugMode(DebugMode mode);
 
     // material management
     void createMaterailBuffer(size_t size);
