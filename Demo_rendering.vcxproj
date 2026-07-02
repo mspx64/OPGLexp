@@ -128,23 +128,24 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\Vulkan_exp\src\Core\Logger.h" />
     <ClInclude Include="C:\Users\lenovo\Downloads\errorReporting.h" />
-    <ClInclude Include="src\ecs\ComponentId.h" />
-    <ClInclude Include="src\ecs\ComponentManager.h" />
-    <ClInclude Include="src\ecs\ComponentRegistry.h" />
-    <ClInclude Include="src\ecs\Core.h" />
-    <ClInclude Include="src\ecs\Defines.h" />
-    <ClInclude Include="src\ecs\ECS.h" />
-    <ClInclude Include="src\ecs\UUID.h" />
-    <ClInclude Include="src\helpers\Filedial.h" />
-    <ClInclude Include="src\helpers\GltfLoader.h" />
-    <ClInclude Include="src\helpers\Logger.h" />
-    <ClInclude Include="src\Renderer\BufferLayout.h" />
+    <ClInclude Include="src\Core\Application.h" />
+    <ClInclude Include="src\Core\ComponentId.h" />
+    <ClInclude Include="src\Core\ComponentManager.h" />
+    <ClInclude Include="src\Core\ComponentRegistry.h" />
+    <ClInclude Include="src\Core\Core.h" />
+    <ClInclude Include="src\Core\Defines.h" />
+    <ClInclude Include="src\Core\ECS.h" />
+    <ClInclude Include="src\Core\InputManager.h" />
+    <ClInclude Include="src\Core\Timer.h" />
+    <ClInclude Include="src\Core\UUID.h" />
+    <ClInclude Include="src\Core\Window.h" />
+    <ClInclude Include="src\Helpers\Filedial.h" />
+    <ClInclude Include="src\Helpers\GltfLoader.h" />
+    <ClInclude Include="src\Helpers\Logger.h" />
     <ClInclude Include="src\Renderer\camera.h" />
     <ClInclude Include="src\Renderer\ErrorReporting.h" />
     <ClInclude Include="src\Renderer\glad.h" />
-    <ClInclude Include="src\Renderer\IndexBuffer.h" />
     <ClInclude Include="src\Renderer\khrplatform.h" />
     <ClInclude Include="src\Renderer\Material.h" />
     <ClInclude Include="src\Renderer\renderer.h" />
@@ -152,30 +153,28 @@
     <ClInclude Include="src\Renderer\shader.h" />
     <ClInclude Include="src\Renderer\stb_image.h" />
     <ClInclude Include="src\Renderer\Texture.h" />
-    <ClInclude Include="src\Renderer\VertexArray.h" />
-    <ClInclude Include="src\Renderer\VertexBuffer.h" />
     <ClInclude Include="src\UI\Editor.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\Vulkan_exp\src\Core\Logger.cpp" />
     <ClCompile Include="src\app.cpp" />
-    <ClCompile Include="src\ecs\ComponentId.cpp" />
-    <ClCompile Include="src\ecs\ComponentManager.cpp" />
-    <ClCompile Include="src\ecs\ComponentRegistry.cpp" />
-    <ClCompile Include="src\helpers\GltfLoader.cpp" />
-    <ClCompile Include="src\helpers\Logger.cpp" />
+    <ClCompile Include="src\Core\Application.cpp" />
+    <ClCompile Include="src\Core\ComponentId.cpp" />
+    <ClCompile Include="src\Core\ComponentManager.cpp" />
+    <ClCompile Include="src\Core\ComponentRegistry.cpp" />
+    <ClCompile Include="src\Core\InputManager.cpp" />
+    <ClCompile Include="src\Core\Timer.cpp" />
+    <ClCompile Include="src\Core\Window.cpp" />
+    <ClCompile Include="src\Helpers\GltfLoader.cpp" />
+    <ClCompile Include="src\Helpers\Logger.cpp" />
     <ClCompile Include="src\Renderer\camera.cpp" />
     <ClCompile Include="src\Renderer\ErrorReporting.cpp" />
     <ClCompile Include="src\Renderer\glad.c" />
-    <ClCompile Include="src\Renderer\IndexBuffer.cpp" />
     <ClCompile Include="src\Renderer\Material.cpp" />
     <ClCompile Include="src\Renderer\renderer.cpp" />
     <ClCompile Include="src\Renderer\Scene.cpp" />
     <ClCompile Include="src\Renderer\shader.cpp" />
     <ClCompile Include="src\Renderer\stb_image.cpp" />
     <ClCompile Include="src\Renderer\Texture.cpp" />
-    <ClCompile Include="src\Renderer\VertexArray.cpp" />
-    <ClCompile Include="src\Renderer\VertexBuffer.cpp" />
     <ClCompile Include="src\UI\MaterialEditorPanel.cpp" />
     <ClCompile Include="src\UI\TextureNode.cpp" />
   </ItemGroup>

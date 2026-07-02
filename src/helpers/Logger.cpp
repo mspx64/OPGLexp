@@ -1,4 +1,4 @@
-#include "Logger.h"
+#include "./Logger.h"
 #include <chrono>
 #include <unordered_map>
 
@@ -105,8 +105,6 @@ private:
 
 std::shared_ptr<spdlog::logger> Log::s_CoreLogger;
 
-
-
 std::shared_ptr<spdlog::logger>& Log::Core() {
     return s_CoreLogger;
 }
@@ -156,7 +154,6 @@ void Log::Shutdown() {
     s_CoreLogger.reset();
     spdlog::shutdown();
 }
-
 
 void Log::LogStatus(const std::string& msg) {
     if (!s_CoreLogger)

@@ -197,22 +197,6 @@ const char* Renderer::getGLErrorString(GLenum error) {
     }
 }
 
-void Renderer::Draw(const VertexArray& va, const IndexBuffer& ib, const Pipeline& shaderProgram) const {
-    if (!validateDrawCall(va, ib, shaderProgram)) {
-        return;
-    }
-
-    va.Bind();
-    ib.Bind();
-    shaderProgram.use();
-
-    GlCall(glDrawElements(GL_TRIANGLES, ib.GetCount(), GL_UNSIGNED_INT, nullptr));
-}
-
-bool Renderer::validateDrawCall(const VertexArray& va, const IndexBuffer& ib, const Pipeline& shaderProgram) const {
-    return true; // Placeholder
-}
-
 void Renderer::Clear(const glm::vec3& backgroundColor) const {
     GlCall(glClearColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, 1.0f));
     GlCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));

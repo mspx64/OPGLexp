@@ -18,11 +18,7 @@
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/vector_angle.hpp>
 
-#include "BufferLayout.h"
-#include "IndexBuffer.h"
 #include "Texture.h"
-#include "VertexArray.h"
-#include "VertexBuffer.h"
 #include "shader.h"
 #include "Material.h"
 
@@ -202,23 +198,16 @@ public:
     static void GLClearError();
     static bool GLLogCall(const char* function, const char* file, int line);
 
-    void Draw(const VertexArray& va, const IndexBuffer& ib, const Pipeline& shaderProgram) const;
     void Clear(const glm::vec3& backgroundColor = glm::vec3(0.0f)) const;
 
     void Initauad();
     void renderQuad();
-    void renderLine(glm::vec3 p1, glm::vec3 p2);
-    void renderPoint(glm::vec3 pos);
 
     float updateAndLogFPS(GLFWwindow* window);
     float getFPS() const { return m_fps; }
 
     void enableDepthTesting(bool enable = true);
     void enableBlending(bool enable = true);
-
-    // uint32_t addMesh(const VertexBuffer& vb, const IndexBuffer& ib, const
-    // Material& mat);
-    //  uint32_t addMaterial(const Material& mat);
 
     RenderMode getRenderMode() const { return m_currentRenderMode; }
 
@@ -232,23 +221,14 @@ public:
     void createMaterailBuffer(size_t size);
     void uploadMaterialBuffer(MaterialGPU* data, size_t count);
     void updateMaterial(const MaterialGPU& mat, uint32_t index);
-    void updateMaterial(const std::string& materialId);
 
     void updateDirtyRange(MaterialGPU* data, size_t offset, size_t count);
-
-    void passGbuffer();
-    void passLighting();
 
     void render();
     void renderNode(SceneNode* node);
 
 private:
-    // inti passes
-    void initPassGbuffer();
-    void initPassLighitng();
-
     // Helper methods
-    bool               validateDrawCall(const VertexArray& va, const IndexBuffer& ib, const Pipeline& shaderProgram) const;
     static const char* getGLErrorString(GLenum error);
 
     // Performance monitoring

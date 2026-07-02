@@ -46,9 +46,9 @@ void main() {
     lgt::Scene  scene;
     lgt::Camera camera((int)width, (int)height, glm::vec3(0.0f));
 
-    scene.LoadGltf("res/modles/Lanten/lantern_fbx.fbx");
+    // scene.LoadGltf("res/modles/Lanten/lantern_fbx.fbx");
     // scene.LoadGltf("res/modles/Helmet/DamagedHelmet.gltf");
-    //  scene.LoadGltf("res/modles/sopnza_palace/sponza_palace.gltf");
+    scene.LoadGltf("res/modles/sopnza_palace/sponza_palace.gltf");
     //  scene.LoadGltf("res/modles/car/scene.gltf");
 
     int           currentMode = 0;
