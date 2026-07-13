@@ -31,6 +31,9 @@ int main() {
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    Editor::ApplyProfessionalTheme();
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("# version 460");
@@ -46,10 +49,10 @@ int main() {
     lgt::Scene  scene;
     lgt::Camera camera((int)width, (int)height, glm::vec3(0.0f));
 
-    // scene.LoadGltf("res/modles/Lanten/lantern_fbx.fbx");
+    scene.LoadGltf("res/modles/Lanten/lantern_fbx.fbx");
     scene.LoadGltf("res/modles/Helmet/DamagedHelmet.gltf");
     // scene.LoadGltf("res/modles/sopnza_palace/sponza_palace.gltf");
-    //   scene.LoadGltf("res/modles/car/scene.gltf");
+    // scene.LoadGltf("res/modles/car/scene.gltf");
 
     int           currentMode = 0;
     lgt::Renderer renderer(&scene, &camera);
@@ -72,8 +75,12 @@ int main() {
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+        
+        ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
 
         Editor::DrawMaterialEditorPanel();
+        Editor::DrawSceneHierarchyPanel(&scene);
+        Editor::DrawPerformancePanel(&renderer);
 
         ImGui::Render();
         renderer.render();

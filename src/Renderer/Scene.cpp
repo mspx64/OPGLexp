@@ -94,7 +94,7 @@ static const char* TextureTypeToString(aiTextureType type) {
     }
 }
 
-std::shared_ptr<SceneNode> Scene::parseNode(aiNode* node, const aiScene* scene) {
+std::shared_ptr<SceneNode> Scene::parseNode(aiNode* node, const aiScene* scene, const std::vector<uint32_t>& materialMap) {
 
     auto sceneNode  = std::make_shared<SceneNode>();
     sceneNode->name = node->mName.C_Str();
@@ -107,18 +107,18 @@ std::shared_ptr<SceneNode> Scene::parseNode(aiNode* node, const aiScene* scene) 
 
     for (unsigned int i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        sceneNode->meshes.push_back(processMesh(mesh));
+        sceneNode->meshes.push_back(processMesh(mesh, materialMap));
     }
 
     for (unsigned int i = 0; i < node->mNumChildren; i++) {
-        sceneNode->children.push_back(parseNode(node->mChildren[i], scene));
+        sceneNode->children.push_back(parseNode(node->mChildren[i], scene, materialMap));
         sceneNode->children[i]->parent = sceneNode.get();
     }
 
     return sceneNode;
 }
 
-Mesh Scene::processMesh(aiMesh* mesh) {
+Mesh Scene::processMesh(aiMesh* mesh, const std::vector<uint32_t>& materialMap) {
     std::vector<Vertex>   vertices;
     std::vector<uint32_t> indices;
 
@@ -142,7 +142,8 @@ Mesh Scene::processMesh(aiMesh* mesh) {
     }
 
     Mesh glMesh;
-    glMesh.setup(vertices, indices, mesh->mMaterialIndex);
+    uint32_t globalMaterialIndex = materialMap[mesh->mMaterialIndex];
+    glMesh.setup(vertices, indices, globalMaterialIndex);
 
     return glMesh;
 }
@@ -162,9 +163,9 @@ bool Scene::LoadGltf(const std::filesystem::path& path) {
         return false;
     }
 
-    Clear();
-    m_RootNodes.push_back(parseNode(scene->mRootNode, scene));
-    loader::assimp::ProcaessMaterials(scene, path.parent_path().string());
+    // Clear(); // Removed to support loading multiple models simultaneously
+    std::vector<uint32_t> materialMap = loader::assimp::ProcaessMaterials(scene, path.parent_path().string());
+    m_RootNodes.push_back(parseNode(scene->mRootNode, scene, materialMap));
     Update();
     return true;
 }

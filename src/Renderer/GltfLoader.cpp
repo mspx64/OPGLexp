@@ -25,7 +25,7 @@ const std::vector<TextureMapping> g_PBRMappings = {{aiTextureType_BASE_COLOR, lg
                                                    {aiTextureType_NORMAL_CAMERA, lgt::TextureType::NORMAL},
                                                    {aiTextureType_EMISSIVE, lgt::TextureType::EMISSIVE}};
 
-bool ProcaessMaterials(const aiScene* scene, const std::string& dir) {
+std::vector<uint32_t> ProcaessMaterials(const aiScene* scene, const std::string& dir) {
 
     unsigned char    color[] = {255, 255, 255};
     lgt::TextureDesc desc{};
@@ -39,13 +39,17 @@ bool ProcaessMaterials(const aiScene* scene, const std::string& dir) {
     std::string defaultTextureId      = "FALLBACK_TEXTURE_WHITE";
     lgt::g_Textures[defaultTextureId] = std::move(texture);
 
+    std::vector<uint32_t> materialMap(scene->mNumMaterials, 0);
+
     for (unsigned int i = 0; i < scene->mNumMaterials; ++i) {
         auto* mat = scene->mMaterials[i];
         ASSERT(mat);
 
         auto it = lgt::g_MaterialBRDF.find(mat->GetName().C_Str());
-        if (it != lgt::g_MaterialBRDF.end())
+        if (it != lgt::g_MaterialBRDF.end()) {
+            materialMap[i] = it->second.gpuIndex;
             continue;
+        }
 
         lgt::MaterialBRDF materialBrdf{};
 
@@ -106,11 +110,12 @@ bool ProcaessMaterials(const aiScene* scene, const std::string& dir) {
         }
 
         materialBrdf.gpuIndex = static_cast<uint32_t>(lgt::g_MaterialGPU.size());
+        materialMap[i] = materialBrdf.gpuIndex;
         lgt::g_MaterialGPU.push_back(std::move(materialBrdf.ToMaterialGPU()));
         lgt::g_MaterialBRDF[mat->GetName().C_Str()] = std::move(materialBrdf);
     }
 
-    return scene->HasMaterials();
+    return materialMap;
 }
 static const char* TextureTypeToString(aiTextureType type) {
     switch (type) {

@@ -157,7 +157,7 @@
     <ClInclude Include="src\UI\Editor.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\App.cpp" />
+    <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Core\Application.cpp" />
     <ClCompile Include="src\Core\ComponentId.cpp" />
     <ClCompile Include="src\Core\ComponentManager.cpp" />

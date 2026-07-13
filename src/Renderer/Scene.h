@@ -57,8 +57,8 @@ public:
 
 private:
     void                       processMaterials(const aiScene* scene, const std::string& dir);
-    std::shared_ptr<SceneNode> parseNode(aiNode* node, const aiScene* scene);
-    Mesh                       processMesh(aiMesh* mesh);
+    std::shared_ptr<SceneNode> parseNode(aiNode* node, const aiScene* scene, const std::vector<uint32_t>& materialMap);
+    Mesh                       processMesh(aiMesh* mesh, const std::vector<uint32_t>& materialMap);
 
     std::vector<MaterialGPU>                m_materialBuffer;
     std::vector<std::shared_ptr<SceneNode>> m_RootNodes;
