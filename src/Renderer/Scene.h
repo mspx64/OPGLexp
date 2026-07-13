@@ -51,6 +51,7 @@ public:
     bool LoadGltf(const std::filesystem::path& path);
     void Update();
     void Clear();
+    void RemoveNode(SceneNode* node);
 
     const std::vector<std::shared_ptr<SceneNode>>& getRootNodes() const { return m_RootNodes; }
     std::vector<MaterialGPU>&                      getMaterialBuffer() { return m_materialBuffer; };

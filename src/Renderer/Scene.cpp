@@ -36,6 +36,23 @@ void Scene::Clear() {
     m_RootNodes.clear();
 }
 
+void Scene::RemoveNode(SceneNode* nodeToRemove) {
+    if (!nodeToRemove) return;
+    
+    if (nodeToRemove->parent) {
+        auto& siblings = nodeToRemove->parent->children;
+        siblings.erase(std::remove_if(siblings.begin(), siblings.end(),
+            [nodeToRemove](const std::shared_ptr<SceneNode>& child) {
+                return child.get() == nodeToRemove;
+            }), siblings.end());
+    } else {
+        m_RootNodes.erase(std::remove_if(m_RootNodes.begin(), m_RootNodes.end(),
+            [nodeToRemove](const std::shared_ptr<SceneNode>& root) {
+                return root.get() == nodeToRemove;
+            }), m_RootNodes.end());
+    }
+}
+
 void Scene::Update() {
     for (auto root : m_RootNodes) {
         root->UpdateTransformCascades();

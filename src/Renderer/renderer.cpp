@@ -275,6 +275,7 @@ void Renderer::setScene(Scene* Scene) {
 
 void Renderer::setDebugMode(DebugMode mode) {
     ASSERT(testPipeline);
+    testPipeline->use();
     testPipeline->setInt("u_DebugMode", (int)mode);
 }
 

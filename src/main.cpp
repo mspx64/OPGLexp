@@ -75,27 +75,42 @@ int main() {
         camera.update(window, camSpeed, camSensitivity);
         // scene.Update();
 
-        // 3D Scene Rendering to FBO
-        framebuffer.Use();
-        glClearColor(0.05f, 0.05f, 0.05f, 1.0f); // Viewport background color
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        
-        // Match renderer viewport to the FBO size
-        renderer.setViewport(framebuffer.GetWidth(), framebuffer.GetHeight());
-        renderer.render();
-        grid.render(camera, deltaTime);
-        
-        framebuffer.Unuse();
-
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
         
         ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
 
+        // Viewport Panel & 3D Rendering
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+        ImGui::Begin("Viewport");
+        ImVec2 viewportSize = ImGui::GetContentRegionAvail();
+        if (viewportSize.x > 0.0f && viewportSize.y > 0.0f) {
+            // Resize FBO and Camera if the viewport changed
+            if (framebuffer.GetWidth() != static_cast<int>(viewportSize.x) || framebuffer.GetHeight() != static_cast<int>(viewportSize.y)) {
+                framebuffer.Resize(static_cast<int>(viewportSize.x), static_cast<int>(viewportSize.y));
+                camera.setAspect(static_cast<int>(viewportSize.x), static_cast<int>(viewportSize.y));
+            }
+
+            // 3D Scene Rendering to FBO
+            framebuffer.Use();
+            glClearColor(0.05f, 0.05f, 0.05f, 1.0f); // Viewport background color
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            
+            renderer.setViewport(framebuffer.GetWidth(), framebuffer.GetHeight());
+            renderer.render();
+            grid.render(camera, deltaTime);
+            
+            framebuffer.Unuse();
+
+            // Display FBO texture in ImGui
+            ImGui::Image((ImTextureID)(intptr_t)framebuffer.GetTextureId(), viewportSize, ImVec2(0, 1), ImVec2(1, 0));
+        }
+        ImGui::End();
+        ImGui::PopStyleVar();
+
         Editor::DrawMaterialEditorPanel();
         Editor::DrawSceneHierarchyPanel(&scene);
-        Editor::DrawViewportPanel(&framebuffer);
         Editor::DrawEnvironmentPanel(&grid, &renderer);
         Editor::DrawCameraPanel(&camera, &camSpeed, &camSensitivity);
         Editor::DrawAssetBrowserPanel(&scene);

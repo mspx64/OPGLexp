@@ -2,6 +2,7 @@
 #include "Renderer/Renderer.h"
 #include "Renderer/Scene.h"
 #include "Renderer/Camera.h"
+#include "Renderer/Texture.h"
 #include "Editor.h"
 
 #include <imgui.h>
@@ -78,6 +79,7 @@ void ApplyProfessionalTheme() {
     colors[ImGuiCol_NavHighlight]           = ImVec4(0.16f, 0.51f, 0.86f, 1.00f);
 }
 
+static SceneNode* s_NodeToDelete = nullptr;
 
 static void DrawSceneNodeRecursive(lgt::SceneNode* node) {
     if (!node) return;
@@ -95,8 +97,16 @@ static void DrawSceneNodeRecursive(lgt::SceneNode* node) {
     
     bool nodeOpen = ImGui::TreeNodeEx((void*)node, flags, "%s", displayName.c_str());
     
-    if (ImGui::IsItemClicked()) {
+    if (ImGui::IsItemClicked(0) || ImGui::IsItemClicked(1)) {
         g_SelectedNode = node;
+    }
+    
+    if (ImGui::BeginPopupContextItem()) {
+        if (ImGui::MenuItem("Delete")) {
+            s_NodeToDelete = node;
+            if (g_SelectedNode == node) g_SelectedNode = nullptr;
+        }
+        ImGui::EndPopup();
     }
     
     if (nodeOpen && !(flags & ImGuiTreeNodeFlags_Leaf)) {
@@ -116,34 +126,22 @@ void DrawSceneHierarchyPanel(lgt::Scene* scene) {
     if (!scene) return;
     
     ImGui::Begin("Scene Hierarchy");
+    
+    s_NodeToDelete = nullptr;
     auto& roots = scene->getRootNodes();
     for (auto& root : roots) {
         DrawSceneNodeRecursive(root.get());
     }
-    ImGui::End();
-}
-
-void DrawViewportPanel(lgt::FrameBuffer* fbo) {
-    if (!fbo) return;
     
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-    ImGui::Begin("Viewport");
-    
-    ImVec2 viewportSize = ImGui::GetContentRegionAvail();
-    if (viewportSize.x > 0.0f && viewportSize.y > 0.0f) {
-        // Only resize if the dimensions have changed
-        if (fbo->GetWidth() != static_cast<int>(viewportSize.x) || fbo->GetHeight() != static_cast<int>(viewportSize.y)) {
-            fbo->Resize(static_cast<int>(viewportSize.x), static_cast<int>(viewportSize.y));
-        }
-        
-        // Render the texture (Note: ImGui requires casting GLuint to void*)
-        // OpenGL textures are upside down in ImGui by default, so we flip the UVs
-        ImGui::Image((ImTextureID)(intptr_t)fbo->GetTextureId(), viewportSize, ImVec2(0, 1), ImVec2(1, 0));
+    if (s_NodeToDelete) {
+        scene->RemoveNode(s_NodeToDelete);
+        s_NodeToDelete = nullptr;
     }
     
     ImGui::End();
-    ImGui::PopStyleVar();
 }
+
+
 
 void DrawEnvironmentPanel(lgt::Grid* grid, lgt::Renderer* renderer) {
     ImGui::Begin("Environment & Renderer");
@@ -215,17 +213,92 @@ void DrawAssetBrowserPanel(lgt::Scene* scene) {
     }
     
     if (std::filesystem::exists(modelsPath)) {
-        for (auto& entry : std::filesystem::recursive_directory_iterator(modelsPath)) {
-            if (entry.is_regular_file()) {
-                std::string ext = entry.path().extension().string();
-                if (ext == ".gltf" || ext == ".glb" || ext == ".fbx") {
-                    std::string filename = entry.path().filename().string();
-                    if (ImGui::Button(filename.c_str(), ImVec2(ImGui::GetContentRegionAvail().x, 0))) {
-                        scene->LoadGltf(entry.path().string());
+        static GLuint s_GltfIcon = 0;
+        static GLuint s_FbxIcon = 0;
+        
+        if (s_GltfIcon == 0) {
+            int width, height, nrChannels;
+            unsigned char* data = stbi_load("res/images/icon_gltf.jpg", &width, &height, &nrChannels, 4);
+            if (data) {
+                glGenTextures(1, &s_GltfIcon);
+                glBindTexture(GL_TEXTURE_2D, s_GltfIcon);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+                glGenerateMipmap(GL_TEXTURE_2D);
+                stbi_image_free(data);
+            }
+        }
+        
+        if (s_FbxIcon == 0) {
+            int width, height, nrChannels;
+            unsigned char* data = stbi_load("res/images/icon_fbx.jpg", &width, &height, &nrChannels, 4);
+            if (data) {
+                glGenTextures(1, &s_FbxIcon);
+                glBindTexture(GL_TEXTURE_2D, s_FbxIcon);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+                glGenerateMipmap(GL_TEXTURE_2D);
+                stbi_image_free(data);
+            }
+        }
+        
+        static float padding = 16.0f;
+        static float thumbnailSize = 90.0f;
+        float cellSize = thumbnailSize + padding;
+
+        float panelWidth = ImGui::GetContentRegionAvail().x;
+        int columnCount = (int)(panelWidth / cellSize);
+        if (columnCount < 1) columnCount = 1;
+
+        if (ImGui::BeginTable("AssetGrid", columnCount)) {
+            for (auto& entry : std::filesystem::recursive_directory_iterator(modelsPath)) {
+                if (entry.is_regular_file()) {
+                    std::string ext = entry.path().extension().string();
+                    if (ext == ".gltf" || ext == ".glb" || ext == ".fbx") {
+                        ImGui::TableNextColumn();
+                        std::string filename = entry.path().filename().string();
+                        
+                        std::string filepath = entry.path().string();
+                        ImGui::PushID(filepath.c_str());
+                        
+                        // Push button colors to look more like a Unity thumbnail backing
+                        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.2f, 0.2f, 1.0f));
+                        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
+                        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.15f, 0.15f, 0.15f, 1.0f));
+                        
+                        bool clicked = false;
+                        
+                        GLuint activeIcon = 0;
+                        if (ext == ".gltf" || ext == ".glb") activeIcon = s_GltfIcon;
+                        else if (ext == ".fbx") activeIcon = s_FbxIcon;
+                        
+                        if (activeIcon != 0) {
+                            clicked = ImGui::ImageButton(filename.c_str(), (ImTextureID)(intptr_t)activeIcon, ImVec2(thumbnailSize, thumbnailSize));
+                        } else {
+                            clicked = ImGui::Button("MODEL", ImVec2(thumbnailSize, thumbnailSize));
+                        }
+                        
+                        if (clicked) {
+                            scene->LoadGltf(entry.path().string());
+                        }
+                        ImGui::PopStyleColor(3);
+                        
+                        // Attempt to center text under the button
+                        float textWidth = ImGui::CalcTextSize(filename.c_str()).x;
+                        float offset = (thumbnailSize - textWidth) * 0.5f;
+                        if (offset > 0.0f) {
+                            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + offset);
+                        }
+                        ImGui::TextWrapped("%s", filename.c_str());
+                        ImGui::PopID();
                     }
                 }
             }
+            ImGui::EndTable();
         }
+        
     } else {
         ImGui::Text("Models directory not found.");
     }
