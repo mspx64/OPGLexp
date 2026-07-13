@@ -40,7 +40,7 @@ int main() {
     fontConfig.OversampleH = 2;
     fontConfig.OversampleV = 2;
     // Segoe UI is practically the Windows default font and looks very clean. 
-    io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\segoeui.ttf", 24.0f, &fontConfig);
+    io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\segoeui.ttf", 20.0f, &fontConfig);
     
     Editor::ApplyProfessionalTheme();
 
@@ -60,59 +60,67 @@ Size=400,400
 Collapsed=0
 
 [Window][Viewport]
-Pos=314,0
-Size=1222,718
+Pos=363,0
+Size=1210,718
 Collapsed=0
 DockId=0x00000009,0
 
 [Window][Material Editor]
-Pos=1538,0
-Size=382,528
+Pos=1575,0
+Size=345,562
 Collapsed=0
 DockId=0x00000003,0
 
 [Window][Scene Hierarchy]
 Pos=0,0
-Size=312,549
+Size=361,549
 Collapsed=0
 DockId=0x00000007,0
 
 [Window][Environment & Renderer]
-Pos=1538,530
-Size=382,525
+Pos=1575,564
+Size=345,491
 Collapsed=0
 DockId=0x00000004,0
 
 [Window][Camera Controls]
-Pos=1538,530
-Size=382,525
+Pos=1575,564
+Size=345,491
 Collapsed=0
 DockId=0x00000004,1
 
 [Window][Asset Browser]
-Pos=314,720
-Size=1222,335
+Pos=363,720
+Size=503,335
 Collapsed=0
-DockId=0x0000000A,0
+DockId=0x0000000B,0
 
 [Window][Inspector]
 Pos=0,551
-Size=312,504
+Size=361,504
 Collapsed=0
 DockId=0x00000008,0
 
+[Window][Console]
+Pos=868,720
+Size=705,335
+Collapsed=0
+DockId=0x0000000C,0
+
 [Docking][Data]
-DockSpace       ID=0x08BD597D Window=0x1BBC0F80 Pos=0,0 Size=1920,1055 Split=X
-  DockNode      ID=0x00000005 Parent=0x08BD597D SizeRef=312,1055 Split=Y Selected=0xB8729153
-    DockNode    ID=0x00000007 Parent=0x00000005 SizeRef=473,549 Selected=0xB8729153
-    DockNode    ID=0x00000008 Parent=0x00000005 SizeRef=473,504 Selected=0x36DC96AB
-  DockNode      ID=0x00000006 Parent=0x08BD597D SizeRef=1606,1055 Split=X
-    DockNode    ID=0x00000001 Parent=0x00000006 SizeRef=1222,1055 Split=Y Selected=0xC450F867
-      DockNode  ID=0x00000009 Parent=0x00000001 SizeRef=1107,718 CentralNode=1 Selected=0xC450F867
-      DockNode  ID=0x0000000A Parent=0x00000001 SizeRef=1107,335 Selected=0x36AF052B
-    DockNode    ID=0x00000002 Parent=0x00000006 SizeRef=382,1055 Split=Y Selected=0x3D0FF072
-      DockNode  ID=0x00000003 Parent=0x00000002 SizeRef=336,528 Selected=0x3D0FF072
-      DockNode  ID=0x00000004 Parent=0x00000002 SizeRef=336,525 Selected=0x5FB1F84F
+DockSpace         ID=0x08BD597D Window=0x1BBC0F80 Pos=0,0 Size=1920,1055 Split=X
+  DockNode        ID=0x00000005 Parent=0x08BD597D SizeRef=361,1055 Split=Y Selected=0xB8729153
+    DockNode      ID=0x00000007 Parent=0x00000005 SizeRef=473,549 Selected=0xB8729153
+    DockNode      ID=0x00000008 Parent=0x00000005 SizeRef=473,504 Selected=0x36DC96AB
+  DockNode        ID=0x00000006 Parent=0x08BD597D SizeRef=1557,1055 Split=X
+    DockNode      ID=0x00000001 Parent=0x00000006 SizeRef=1210,1055 Split=Y Selected=0xC450F867
+      DockNode    ID=0x00000009 Parent=0x00000001 SizeRef=1107,718 CentralNode=1 Selected=0xC450F867
+      DockNode    ID=0x0000000A Parent=0x00000001 SizeRef=1107,335 Split=X Selected=0x36AF052B
+        DockNode  ID=0x0000000B Parent=0x0000000A SizeRef=503,335 Selected=0x36AF052B
+        DockNode  ID=0x0000000C Parent=0x0000000A SizeRef=705,335 Selected=0xEA83D666
+    DockNode      ID=0x00000002 Parent=0x00000006 SizeRef=345,1055 Split=Y Selected=0x3D0FF072
+      DockNode    ID=0x00000003 Parent=0x00000002 SizeRef=336,562 Selected=0x3D0FF072
+      DockNode    ID=0x00000004 Parent=0x00000002 SizeRef=336,491 Selected=0xBF434FD5
 )";
             ImGui::LoadIniSettingsFromMemory(default_layout);
         }
