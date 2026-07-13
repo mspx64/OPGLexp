@@ -3,7 +3,7 @@
 #include <iostream>
 #include <algorithm>
 
-#include "helpers/GltfLoader.h"
+#include "GltfLoader.h"
 #include "helpers/Logger.h"
 
 namespace lgt {

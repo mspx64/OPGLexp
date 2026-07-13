@@ -1,7 +1,7 @@
 #pragma once
 
-#include "glad.h"
-#include "stb_image.h"
+#include "Vendor/glad.h"
+#include "Vendor/stb_image.h"
 
 #include <unordered_map>
 #include <string>

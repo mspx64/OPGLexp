@@ -1,4 +1,7 @@
-﻿#pragma once
+#pragma once
+#ifdef _WIN32
+#undef APIENTRY
+#endif
 #include <spdlog/async.h>
 #include <spdlog/fmt/fmt.h>
 #include <spdlog/fmt/ostr.h>

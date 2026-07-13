@@ -1,4 +1,4 @@
-﻿#include "camera.h"
+#include "Camera.h"
 #include "helpers/Logger.h"
 #include <glm/gtx/string_cast.hpp> // for glm::to_string if needed in logging
 
@@ -50,10 +50,10 @@ void Camera::update(GLFWwindow* window, const float& speed, const float& sensiti
         double xpos, ypos;
         glfwGetCursorPos(window, &xpos, &ypos);
 
-        yaw   = sensitivity * ((ypos - lasty) / 2.0f) / m_h;
-        pitch = sensitivity * ((xpos - lastx) / 2.0f) / m_w;
-        lastx = xpos;
-        lasty = ypos;
+        yaw   = sensitivity * (static_cast<float>(ypos) - lasty) / 2.0f / m_h;
+        pitch = sensitivity * (static_cast<float>(xpos) - lastx) / 2.0f / m_w;
+        lastx = static_cast<float>(xpos);
+        lasty = static_cast<float>(ypos);
 
         newfront = glm::rotate(front, glm::radians(-yaw), glm::normalize(glm::cross(front, up)));
 

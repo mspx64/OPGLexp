@@ -1,15 +1,15 @@
 
 #include "Renderer/ErrorReporting.h"
 #include "Renderer/Scene.h"
-#include "Renderer/camera.h"
-#include "Renderer/renderer.h"
+#include "Renderer/Camera.h"
+#include "Renderer/Renderer.h"
 #include "UI/Editor.h"
 #include "helpers/Logger.h"
 
 #define MAIN        void main()
 #define MAIN_RETURN return
 
-void main() {
+int main() {
     GLFWwindow* window;
 
     CORE_LOG_INIT();
@@ -18,7 +18,7 @@ void main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    float height = 1080, width = 1920;
+    int height = 1080, width = 1920;
 
     window = glfwCreateWindow(width, height, "Lightnig", NULL, NULL);
     assert(window);
@@ -47,9 +47,9 @@ void main() {
     lgt::Camera camera((int)width, (int)height, glm::vec3(0.0f));
 
     // scene.LoadGltf("res/modles/Lanten/lantern_fbx.fbx");
-    // scene.LoadGltf("res/modles/Helmet/DamagedHelmet.gltf");
-    scene.LoadGltf("res/modles/sopnza_palace/sponza_palace.gltf");
-    //  scene.LoadGltf("res/modles/car/scene.gltf");
+    scene.LoadGltf("res/modles/Helmet/DamagedHelmet.gltf");
+    // scene.LoadGltf("res/modles/sopnza_palace/sponza_palace.gltf");
+    //   scene.LoadGltf("res/modles/car/scene.gltf");
 
     int           currentMode = 0;
     lgt::Renderer renderer(&scene, &camera);
@@ -66,7 +66,7 @@ void main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-        camera.update(window, 0.001, 20);
+        camera.update(window, 0.001f, 20.0f);
         // scene.Update();
 
         ImGui_ImplOpenGL3_NewFrame();
@@ -102,4 +102,5 @@ void main() {
 
     glfwDestroyWindow(window);
     glfwTerminate();
+    return 0;
 }

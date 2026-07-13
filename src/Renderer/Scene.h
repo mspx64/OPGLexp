@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <filesystem>
 #include <glm/glm.hpp>
 #include <memory>
@@ -10,7 +10,7 @@
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 
-#include "renderer.h"
+#include "Renderer.h"
 
 namespace lgt {
 

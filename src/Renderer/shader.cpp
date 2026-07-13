@@ -1,7 +1,7 @@
-﻿#include "shader.h"
-#include "camera.h"
+#include "Shader.h"
+#include "Camera.h"
 
-#include "renderer.h"
+#include "Renderer.h"
 #include "helpers/Logger.h"
 
 namespace lgt {

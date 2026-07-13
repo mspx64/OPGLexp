@@ -1,7 +1,7 @@
-#include "renderer.h"
+#include "Renderer.h"
 #include "helpers/Logger.h"
 #include "Scene.h"
-#include "camera.h"
+#include "Camera.h"
 #include <chrono>
 #include <iostream>
 
@@ -334,11 +334,11 @@ RenderId FrameBuffer::GetTextureId() {
 }
 
 RenderId FrameBuffer::GetHeight() {
-    return m_height;
+    return static_cast<RenderId>(m_height);
 }
 
 RenderId FrameBuffer::GetWidth() {
-    return m_width;
+    return static_cast<RenderId>(m_width);
 }
 void FrameBuffer::Resize(int w, int h) {
     m_width  = w;
@@ -358,7 +358,7 @@ void FrameBuffer::Unuse() {
     GlCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 }
 
-FrameBuffer::FrameBuffer(float w, float h)
+FrameBuffer::FrameBuffer(int w, int h)
     : m_width(w),
       m_height(h) {
     GlCall(glGenFramebuffers(1, &m_FBO));
@@ -484,7 +484,7 @@ void Renderer::renderNode(SceneNode* node) {
     for (auto& mesh : node->meshes) {
         testPipeline->setMaterial(mesh.materialIndex);
         glBindVertexArray(mesh.vao);
-        glDrawElements(GL_TRIANGLES, mesh.indexCount, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.indexCount), GL_UNSIGNED_INT, 0);
     }
     for (auto child : node->children) {
         renderNode(child.get());

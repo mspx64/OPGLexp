@@ -1,6 +1,6 @@
 
 #include "GltfLoader.h"
-#include "Logger.h"
+#include "Helpers/Logger.h"
 
 #include "Renderer/Material.h"
 
@@ -105,7 +105,7 @@ bool ProcaessMaterials(const aiScene* scene, const std::string& dir) {
             }
         }
 
-        materialBrdf.gpuIndex = lgt::g_MaterialGPU.size();
+        materialBrdf.gpuIndex = static_cast<uint32_t>(lgt::g_MaterialGPU.size());
         lgt::g_MaterialGPU.push_back(std::move(materialBrdf.ToMaterialGPU()));
         lgt::g_MaterialBRDF[mat->GetName().C_Str()] = std::move(materialBrdf);
     }

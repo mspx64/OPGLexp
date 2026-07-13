@@ -52,7 +52,7 @@ Texture CreateTexture(const TextureDesc& desc) {
     texture.isValid = true;
 
     if (desc.generateMips)
-        levels = static_cast<GLsizei>(std::floor(std::log2(std::max<float>(desc.width, desc.height)))) + 1;
+        levels = static_cast<GLsizei>(std::floor(std::log2(static_cast<float>(std::max(desc.width, desc.height))))) + 1;
 
     glCreateTextures(GL_TEXTURE_2D, 1, &texture.handle);
     glTextureStorage2D(texture.handle, levels, internalFormat, texture.width, texture.height);

@@ -1,5 +1,5 @@
 #pragma once
-#include "glad.h"
+#include "Vendor/glad.h"
 #include <cstdlib>
 #include <fstream>
 #include <glm/glm.hpp>

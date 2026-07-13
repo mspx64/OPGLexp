@@ -3,7 +3,13 @@
 #include <iostream>
 #include <memory>
 
-#include "glad.h"
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include "Vendor/glad.h"
 #include <GLFW/glfw3.h>
 
 #include <imgui.h>
@@ -19,7 +25,7 @@
 #include <glm/gtx/vector_angle.hpp>
 
 #include "Texture.h"
-#include "shader.h"
+#include "Shader.h"
 #include "Material.h"
 
 #define SHADOW_WIDTH  2048
@@ -107,7 +113,7 @@ struct GridSettings {
 
 class FrameBuffer {
 private:
-    float    m_width, m_height;
+    int      m_width, m_height;
     RenderId m_FBO;
     RenderId m_textureId;
     RenderId m_renderbuffer;
@@ -122,7 +128,7 @@ public:
     RenderId GetWidth();
     void     Resize(int w, int h);
 
-    FrameBuffer(float w, float h);
+    FrameBuffer(int w, int h);
     ~FrameBuffer();
 };
 

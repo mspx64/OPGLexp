@@ -30,7 +30,7 @@
 		https://glad.dav1d.de/#profile=compatibility&language=c&specification=gl&loader=on&api=gl%3D4.6&extensions=GL_ARB_bindless_texture&extensions=GL_ARB_buffer_storage&extensions=GL_ARB_compute_shader&extensions=GL_ARB_gpu_shader5&extensions=GL_ARB_shader_draw_parameters&extensions=GL_ARB_shader_storage_buffer_object&extensions=GL_ARB_sparse_texture&extensions=GL_ARB_texture_compression_bptc&extensions=GL_ARB_texture_cube_map_array&extensions=GL_ARB_texture_gather&extensions=GL_KHR_debug
 */
 
-#include "glad.h"
+#include "Vendor/glad.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

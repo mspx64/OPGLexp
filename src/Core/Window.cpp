@@ -2,7 +2,7 @@
 #include "Window.h"
 #include "Helpers/Logger.h"
 
-#include <glad/glad.h>
+#include "Vendor/glad.h"
 #include <GLFW/glfw3.h>
 #include <stdexcept>
 
