@@ -62,11 +62,13 @@ struct Vertex {
 };
 
 struct Mesh {
+    std::string name;
     GLuint   vao, vbo, ibo;
     size_t   indexCount;
     uint32_t materialIndex;
 
-    void setup(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, uint32_t matIdx) {
+    void setup(const std::string& meshName, const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, uint32_t matIdx) {
+        name          = meshName;
         materialIndex = matIdx;
         indexCount    = indices.size();
 
@@ -222,6 +224,7 @@ public:
     void setCamera(Camera* camera);
     void setScene(Scene* Scene);
     void setDebugMode(DebugMode mode);
+    DebugMode getDebugMode() const { return m_debugMode; }
 
     // material management
     void createMaterailBuffer(size_t size);
@@ -247,6 +250,7 @@ private:
 
     // Render state
     RenderMode m_currentRenderMode;
+    DebugMode m_debugMode = DebugMode::FINAL_COLOR;
 
     Pipeline* testPipeline = nullptr;
     Camera*   camera_      = nullptr;

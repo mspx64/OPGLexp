@@ -1,0 +1,19 @@
+{
+  "name": "opglexp",
+  "version-string": "1.0.0",
+  "dependencies": [
+    "assimp",
+    "fmt",
+    "glfw3",
+    "glm",
+    {
+      "name": "imgui",
+      "features": [
+        "docking-experimental",
+        "glfw-binding",
+        "opengl3-binding"
+      ]
+    },
+    "spdlog"
+  ]
+}

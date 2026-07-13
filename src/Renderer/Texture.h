@@ -43,6 +43,7 @@ struct TextureDesc {
         desc.data   = data;
         desc.width  = width;
         desc.height = height;
+        return desc;
     }
 };
 

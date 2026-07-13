@@ -1,34 +1,16 @@
 #include "Camera.h"
-#include "helpers/Logger.h"
+#include "Helpers/Logger.h"
 #include <glm/gtx/string_cast.hpp> // for glm::to_string if needed in logging
 
 namespace lgt {
 Camera::Camera(int width, int height, glm::vec3 position)
-    : m_h(height),
-      m_w(width),
-      m_position(position) {
+    : m_position(position),
+      m_h(height),
+      m_w(width) {
     CORE_INFO("Camera initialized at position: [{}]", glm::to_string(m_position));
 }
 
-void Camera::update(GLFWwindow* window, const float& speed, const float& sensitivity) {
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        m_position += speed * glm::vec3(front.x, 0.0f, front.z);
-
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        m_position -= speed * glm::vec3(front.x, 0.0f, front.z);
-
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        m_position -= speed * glm::normalize(glm::cross(front, up));
-
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        m_position += speed * glm::normalize(glm::cross(front, up));
-
-    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
-        m_position -= speed * up;
-
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-        m_position += speed * up;
-
+void Camera::update(GLFWwindow* window, const float& speed, const float& sensitivity, bool canCapture) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         if (!firstclick) {
@@ -38,15 +20,36 @@ void Camera::update(GLFWwindow* window, const float& speed, const float& sensiti
     }
 
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        if (firstclick) {
-            glfwSetCursorPos(window, lastx, lasty);
+        if (firstclick && canCapture) {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            double temp_x, temp_y;
+            glfwGetCursorPos(window, &temp_x, &temp_y);
+            lastx = static_cast<float>(temp_x);
+            lasty = static_cast<float>(temp_y);
             CORE_INFO("Camera control enabled. Cursor locked.");
             firstclick = false;
         }
     }
 
     if (!firstclick) {
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+            m_position += speed * glm::vec3(front.x, 0.0f, front.z);
+
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+            m_position -= speed * glm::vec3(front.x, 0.0f, front.z);
+
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+            m_position -= speed * glm::normalize(glm::cross(front, up));
+
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+            m_position += speed * glm::normalize(glm::cross(front, up));
+
+        if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+            m_position -= speed * up;
+
+        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+            m_position += speed * up;
+
         double xpos, ypos;
         glfwGetCursorPos(window, &xpos, &ypos);
 
@@ -62,7 +65,7 @@ void Camera::update(GLFWwindow* window, const float& speed, const float& sensiti
         else
             CORE_WARN("Camera pitch limit reached. Rotation blocked.");
 
-        front = glm::rotate(front, glm::radians(pitch), -up);
+        front = glm::rotate(front, glm::radians(-pitch), up);
     }
 
     View = glm::lookAt(m_position, m_position + front, up);

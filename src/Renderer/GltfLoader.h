@@ -5,20 +5,7 @@
 
 namespace loader::assimp {
 
-static GLenum MapAssimpWrapMode(aiTextureMapMode mode) {
-    switch (mode) {
-    case aiTextureMapMode_Wrap:
-        return GL_REPEAT;
-    case aiTextureMapMode_Clamp:
-        return GL_CLAMP_TO_EDGE;
-    case aiTextureMapMode_Mirror:
-        return GL_MIRRORED_REPEAT;
-    case aiTextureMapMode_Decal:
-        return GL_CLAMP_TO_BORDER;
-    default:
-        return GL_REPEAT; //  fallback
-    }
-}
+
 
 // TODO
 //  here we are assuming that  , engine will only load  one gltf scene at a time

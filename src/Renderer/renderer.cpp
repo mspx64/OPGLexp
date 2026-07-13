@@ -1,5 +1,5 @@
 #include "Renderer.h"
-#include "helpers/Logger.h"
+#include "Helpers/Logger.h"
 #include "Scene.h"
 #include "Camera.h"
 #include <chrono>
@@ -275,6 +275,7 @@ void Renderer::setScene(Scene* Scene) {
 
 void Renderer::setDebugMode(DebugMode mode) {
     ASSERT(testPipeline);
+    m_debugMode = mode;
     testPipeline->use();
     testPipeline->setInt("u_DebugMode", (int)mode);
 }

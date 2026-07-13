@@ -4,6 +4,7 @@
 #include "Renderer/Camera.h"
 #include "Renderer/Texture.h"
 #include "Editor.h"
+#include "Helpers/Logger.h"
 
 #include <imgui.h>
 #include <glm/gtc/type_ptr.hpp>
@@ -23,60 +24,84 @@ namespace Editor {
 void ApplyProfessionalTheme() {
     ImGuiStyle& style = ImGui::GetStyle();
     
-    // Professional rounded edges
-    style.WindowRounding = 4.0f;
-    style.ChildRounding = 4.0f;
-    style.FrameRounding = 4.0f;
-    style.GrabRounding = 4.0f;
-    style.PopupRounding = 4.0f;
-    style.ScrollbarRounding = 4.0f;
-    style.TabRounding = 4.0f;
+    // Unity-style slightly rounded edges
+    style.WindowRounding = 0.0f;
+    style.ChildRounding = 0.0f;
+    style.FrameRounding = 3.0f;
+    style.GrabRounding = 3.0f;
+    style.PopupRounding = 0.0f;
+    style.ScrollbarRounding = 0.0f;
+    style.TabRounding = 2.0f;
     
     // Clean borders
     style.WindowBorderSize = 1.0f;
     style.FrameBorderSize = 1.0f;
+    style.PopupBorderSize = 1.0f;
     
     ImVec4* colors = style.Colors;
+    
+    // Unity dark theme colors
+    const ImVec4 bgDark          = ImVec4(0.20f, 0.20f, 0.20f, 1.00f); // Main window bg
+    const ImVec4 bgMedium        = ImVec4(0.24f, 0.24f, 0.24f, 1.00f); // Child bg
+    const ImVec4 bgLight         = ImVec4(0.28f, 0.28f, 0.28f, 1.00f); // Frame bg
+    const ImVec4 bgLighter       = ImVec4(0.35f, 0.35f, 0.35f, 1.00f); // Hover bg
+    const ImVec4 bgActive        = ImVec4(0.40f, 0.40f, 0.40f, 1.00f); // Active bg
+    const ImVec4 highlightBlue   = ImVec4(0.17f, 0.36f, 0.53f, 1.00f); // Unity selection blue
+    const ImVec4 highlightBlueHover = ImVec4(0.20f, 0.42f, 0.62f, 1.00f);
+    
     colors[ImGuiCol_Text]                   = ImVec4(0.90f, 0.90f, 0.90f, 1.00f);
     colors[ImGuiCol_TextDisabled]           = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
-    colors[ImGuiCol_WindowBg]               = ImVec4(0.12f, 0.12f, 0.12f, 1.00f);
-    colors[ImGuiCol_ChildBg]                = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
-    colors[ImGuiCol_PopupBg]                = ImVec4(0.15f, 0.15f, 0.15f, 0.94f);
-    colors[ImGuiCol_Border]                 = ImVec4(0.20f, 0.20f, 0.20f, 0.50f);
+    
+    colors[ImGuiCol_WindowBg]               = bgDark;
+    colors[ImGuiCol_ChildBg]                = bgMedium;
+    colors[ImGuiCol_PopupBg]                = ImVec4(0.18f, 0.18f, 0.18f, 0.95f);
+    
+    colors[ImGuiCol_Border]                 = ImVec4(0.10f, 0.10f, 0.10f, 0.80f);
     colors[ImGuiCol_BorderShadow]           = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
-    colors[ImGuiCol_FrameBg]                = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
-    colors[ImGuiCol_FrameBgHovered]         = ImVec4(0.25f, 0.25f, 0.25f, 1.00f);
-    colors[ImGuiCol_FrameBgActive]          = ImVec4(0.30f, 0.30f, 0.30f, 1.00f);
-    colors[ImGuiCol_TitleBg]                = ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
-    colors[ImGuiCol_TitleBgActive]          = ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
-    colors[ImGuiCol_TitleBgCollapsed]       = ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
-    colors[ImGuiCol_MenuBarBg]              = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
-    colors[ImGuiCol_ScrollbarBg]            = ImVec4(0.02f, 0.02f, 0.02f, 0.53f);
-    colors[ImGuiCol_ScrollbarGrab]          = ImVec4(0.31f, 0.31f, 0.31f, 1.00f);
-    colors[ImGuiCol_ScrollbarGrabHovered]   = ImVec4(0.41f, 0.41f, 0.41f, 1.00f);
-    colors[ImGuiCol_ScrollbarGrabActive]    = ImVec4(0.51f, 0.51f, 0.51f, 1.00f);
-    colors[ImGuiCol_CheckMark]              = ImVec4(0.16f, 0.51f, 0.86f, 1.00f); // Blue accent
-    colors[ImGuiCol_SliderGrab]             = ImVec4(0.16f, 0.51f, 0.86f, 1.00f);
-    colors[ImGuiCol_SliderGrabActive]       = ImVec4(0.26f, 0.61f, 0.96f, 1.00f);
-    colors[ImGuiCol_Button]                 = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
-    colors[ImGuiCol_ButtonHovered]          = ImVec4(0.16f, 0.51f, 0.86f, 0.80f);
-    colors[ImGuiCol_ButtonActive]           = ImVec4(0.16f, 0.51f, 0.86f, 1.00f);
-    colors[ImGuiCol_Header]                 = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
-    colors[ImGuiCol_HeaderHovered]          = ImVec4(0.16f, 0.51f, 0.86f, 0.80f);
-    colors[ImGuiCol_HeaderActive]           = ImVec4(0.16f, 0.51f, 0.86f, 1.00f);
-    colors[ImGuiCol_Separator]              = ImVec4(0.20f, 0.20f, 0.20f, 0.50f);
-    colors[ImGuiCol_SeparatorHovered]       = ImVec4(0.16f, 0.51f, 0.86f, 0.78f);
-    colors[ImGuiCol_SeparatorActive]        = ImVec4(0.16f, 0.51f, 0.86f, 1.00f);
-    colors[ImGuiCol_ResizeGrip]             = ImVec4(0.16f, 0.51f, 0.86f, 0.20f);
-    colors[ImGuiCol_ResizeGripHovered]      = ImVec4(0.16f, 0.51f, 0.86f, 0.67f);
-    colors[ImGuiCol_ResizeGripActive]       = ImVec4(0.16f, 0.51f, 0.86f, 0.95f);
-    colors[ImGuiCol_Tab]                    = ImVec4(0.12f, 0.12f, 0.12f, 1.00f);
-    colors[ImGuiCol_TabHovered]             = ImVec4(0.16f, 0.51f, 0.86f, 0.80f);
-    colors[ImGuiCol_TabActive]              = ImVec4(0.16f, 0.51f, 0.86f, 1.00f);
-    colors[ImGuiCol_TabUnfocused]           = ImVec4(0.07f, 0.07f, 0.07f, 0.97f);
-    colors[ImGuiCol_TabUnfocusedActive]     = ImVec4(0.12f, 0.12f, 0.12f, 1.00f);
-    colors[ImGuiCol_TextSelectedBg]         = ImVec4(0.16f, 0.51f, 0.86f, 0.35f);
-    colors[ImGuiCol_NavHighlight]           = ImVec4(0.16f, 0.51f, 0.86f, 1.00f);
+    
+    colors[ImGuiCol_FrameBg]                = bgLight;
+    colors[ImGuiCol_FrameBgHovered]         = bgLighter;
+    colors[ImGuiCol_FrameBgActive]          = bgActive;
+    
+    colors[ImGuiCol_TitleBg]                = bgDark;
+    colors[ImGuiCol_TitleBgActive]          = bgDark;
+    colors[ImGuiCol_TitleBgCollapsed]       = bgDark;
+    
+    colors[ImGuiCol_MenuBarBg]              = bgDark;
+    
+    colors[ImGuiCol_ScrollbarBg]            = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);
+    colors[ImGuiCol_ScrollbarGrab]          = ImVec4(0.35f, 0.35f, 0.35f, 1.00f);
+    colors[ImGuiCol_ScrollbarGrabHovered]   = ImVec4(0.45f, 0.45f, 0.45f, 1.00f);
+    colors[ImGuiCol_ScrollbarGrabActive]    = ImVec4(0.55f, 0.55f, 0.55f, 1.00f);
+    
+    colors[ImGuiCol_CheckMark]              = ImVec4(0.85f, 0.85f, 0.85f, 1.00f);
+    colors[ImGuiCol_SliderGrab]             = highlightBlue;
+    colors[ImGuiCol_SliderGrabActive]       = highlightBlueHover;
+    
+    colors[ImGuiCol_Button]                 = bgLight;
+    colors[ImGuiCol_ButtonHovered]          = bgLighter;
+    colors[ImGuiCol_ButtonActive]           = bgActive;
+    
+    colors[ImGuiCol_Header]                 = bgMedium;
+    colors[ImGuiCol_HeaderHovered]          = bgLighter;
+    colors[ImGuiCol_HeaderActive]           = highlightBlue;
+    
+    colors[ImGuiCol_Separator]              = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
+    colors[ImGuiCol_SeparatorHovered]       = bgLighter;
+    colors[ImGuiCol_SeparatorActive]        = highlightBlue;
+    
+    colors[ImGuiCol_ResizeGrip]             = ImVec4(0.20f, 0.20f, 0.20f, 0.00f);
+    colors[ImGuiCol_ResizeGripHovered]      = bgLighter;
+    colors[ImGuiCol_ResizeGripActive]       = highlightBlue;
+    
+    colors[ImGuiCol_Tab]                    = bgDark;
+    colors[ImGuiCol_TabHovered]             = bgLighter;
+    colors[ImGuiCol_TabActive]              = bgMedium;
+    colors[ImGuiCol_TabUnfocused]           = bgDark;
+    colors[ImGuiCol_TabUnfocusedActive]     = bgMedium;
+    
+    colors[ImGuiCol_TextSelectedBg]         = highlightBlue;
+    colors[ImGuiCol_NavHighlight]           = highlightBlue;
 }
 
 static SceneNode* s_NodeToDelete = nullptr;
@@ -328,26 +353,190 @@ void DrawInspectorPanel() {
             s_RotationEuler = glm::degrees(glm::eulerAngles(rotationQuat));
         }
 
-        ImGui::Text("Selected: %s", g_SelectedNode->name.empty() ? "Unnamed Node" : g_SelectedNode->name.c_str());
+        // 1. Name input
+        char nameBuf[256];
+        strncpy(nameBuf, g_SelectedNode->name.c_str(), sizeof(nameBuf));
+        nameBuf[sizeof(nameBuf) - 1] = '\0';
+        ImGui::SetNextItemWidth(-1); // fill width
+        if (ImGui::InputText("##NodeName", nameBuf, sizeof(nameBuf))) {
+            g_SelectedNode->name = nameBuf;
+        }
+
+        ImGui::Spacing();
         ImGui::Separator();
+        ImGui::Spacing();
+
+        // 2. Transform Component
+        if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
+            if (ImGui::BeginTable("TransformTable", 2, ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingStretchProp)) {
+                ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 80.0f);
+                ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+
+                auto DrawVec3Control = [](const std::string& label, glm::vec3& values, float resetValue = 0.0f) {
+                    bool modified = false;
+                    ImGui::TableNextRow();
+                    ImGui::TableNextColumn();
+                    ImGui::AlignTextToFramePadding();
+                    ImGui::Text("%s", label.c_str());
+
+                    ImGui::TableNextColumn();
+                    ImGui::PushID(label.c_str());
+
+                    float availableWidth = ImGui::GetContentRegionAvail().x;
+                    float itemWidth = (availableWidth - ImGui::GetStyle().ItemSpacing.x * 2.0f) / 3.0f;
+                    float lineHeight = ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.y * 2.0f;
+                    ImVec2 buttonSize = { lineHeight + 3.0f, lineHeight };
+
+                    auto drawComponent = [&](const char* compLabel, float* v, const ImVec4& color, const ImVec4& hoverColor) {
+                        ImGui::PushStyleColor(ImGuiCol_Button, color);
+                        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hoverColor);
+                        ImGui::PushStyleColor(ImGuiCol_ButtonActive, color);
+                        if (ImGui::Button(compLabel, buttonSize)) {
+                            *v = resetValue;
+                            modified = true;
+                        }
+                        ImGui::PopStyleColor(3);
+
+                        ImGui::SameLine();
+                        ImGui::SetNextItemWidth(itemWidth - buttonSize.x);
+                        if (ImGui::DragFloat(("##" + std::string(compLabel)).c_str(), v, 0.1f)) {
+                            modified = true;
+                        }
+                    };
+
+                    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{0, 0});
+                    drawComponent("X", &values.x, ImVec4{0.8f, 0.1f, 0.15f, 1.0f}, ImVec4{0.9f, 0.2f, 0.2f, 1.0f});
+                    ImGui::PopStyleVar();
+
+                    ImGui::SameLine();
+                    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{0, 0});
+                    drawComponent("Y", &values.y, ImVec4{0.2f, 0.7f, 0.2f, 1.0f}, ImVec4{0.3f, 0.8f, 0.3f, 1.0f});
+                    ImGui::PopStyleVar();
+
+                    ImGui::SameLine();
+                    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{0, 0});
+                    drawComponent("Z", &values.z, ImVec4{0.1f, 0.25f, 0.8f, 1.0f}, ImVec4{0.2f, 0.35f, 0.9f, 1.0f});
+                    ImGui::PopStyleVar();
+
+                    ImGui::PopID();
+                    return modified;
+                };
+
+                bool modified = false;
+                if (DrawVec3Control("Position", s_Translation)) modified = true;
+                if (DrawVec3Control("Rotation", s_RotationEuler)) modified = true;
+                if (DrawVec3Control("Scale", s_Scale, 1.0f)) modified = true;
+
+                if (modified) {
+                    glm::quat newRot = glm::quat(glm::radians(s_RotationEuler));
+                    glm::mat4 newTransform = glm::translate(glm::mat4(1.0f), s_Translation) * 
+                                             glm::mat4_cast(newRot) * 
+                                             glm::scale(glm::mat4(1.0f), s_Scale);
+                    
+                    g_SelectedNode->localTransform = newTransform;
+                    g_SelectedNode->UpdateTransformCascades();
+                }
+
+                ImGui::EndTable();
+            }
+        }
         
-        bool modified = false;
+        // 3. Mesh Components
+        if (!g_SelectedNode->meshes.empty()) {
+            for (size_t i = 0; i < g_SelectedNode->meshes.size(); ++i) {
+                ImGui::PushID((int)i);
+                auto& mesh = g_SelectedNode->meshes[i];
+                
+                ImGui::Spacing();
+                std::string filterHeader = "Mesh Filter (" + std::to_string(i) + ")";
+                if (ImGui::CollapsingHeader(filterHeader.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
+                    if (ImGui::BeginTable("MeshFilterTable", 2, ImGuiTableFlags_SizingStretchProp)) {
+                        ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 80.0f);
+                        ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+                        
+                        ImGui::TableNextRow();
+                        ImGui::TableNextColumn();
+                        ImGui::AlignTextToFramePadding();
+                        ImGui::Text("Mesh");
+                        
+                        ImGui::TableNextColumn();
+                        std::string meshName = mesh.name.empty() ? ("Unnamed Mesh") : mesh.name;
+                        ImGui::Text("%s (Indices: %zu)", meshName.c_str(), mesh.indexCount);
+                        
+                        ImGui::EndTable();
+                    }
+                }
+                
+                ImGui::Spacing();
+                std::string rendererHeader = "Mesh Renderer (" + std::to_string(i) + ")";
+                if (ImGui::CollapsingHeader(rendererHeader.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
+                    if (ImGui::BeginTable("MeshRendererTable", 2, ImGuiTableFlags_SizingStretchProp)) {
+                        ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 80.0f);
+                        ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+                        
+                        ImGui::TableNextRow();
+                        ImGui::TableNextColumn();
+                        ImGui::AlignTextToFramePadding();
+                        ImGui::Text("Material");
+                        
+                        ImGui::TableNextColumn();
+                        std::string currentMatName = "Unknown";
+                        for (const auto& [name, brdf] : lgt::g_MaterialBRDF) {
+                            if (brdf.gpuIndex == mesh.materialIndex) {
+                                currentMatName = name.empty() ? "Unnamed Material" : name;
+                                break;
+                            }
+                        }
+                        
+                        ImGui::SetNextItemWidth(-1);
+                        if (ImGui::BeginCombo("##Material", currentMatName.c_str())) {
+                            for (const auto& [name, brdf] : lgt::g_MaterialBRDF) {
+                                bool isSelected = (mesh.materialIndex == brdf.gpuIndex);
+                                std::string displayName = name.empty() ? "Unnamed Material" : name;
+                                std::string uniqueLabel = displayName + "##mat_" + std::to_string(brdf.gpuIndex);
+                                
+                                if (ImGui::Selectable(uniqueLabel.c_str(), isSelected)) {
+                                    mesh.materialIndex = brdf.gpuIndex;
+                                }
+                                if (isSelected) {
+                                    ImGui::SetItemDefaultFocus();
+                                }
+                            }
+                            ImGui::EndCombo();
+                        }
+                        
+                        ImGui::EndTable();
+                    }
+                }
+                ImGui::PopID();
+            }
+        }
         
-        if (ImGui::DragFloat3("Translation", glm::value_ptr(s_Translation), 0.1f)) modified = true;
-        if (ImGui::DragFloat3("Rotation", glm::value_ptr(s_RotationEuler), 1.0f)) modified = true;
-        if (ImGui::DragFloat3("Scale", glm::value_ptr(s_Scale), 0.1f)) modified = true;
-        
-        if (modified) {
-            // Reconstruct the transformation matrix from our cached TRS components
-            glm::quat newRot = glm::quat(glm::radians(s_RotationEuler));
-            glm::mat4 newTransform = glm::translate(glm::mat4(1.0f), s_Translation) * 
-                                     glm::mat4_cast(newRot) * 
-                                     glm::scale(glm::mat4(1.0f), s_Scale);
-            
-            g_SelectedNode->localTransform = newTransform;
-            
-            // Recalculate global transforms down the hierarchy
-            g_SelectedNode->UpdateTransformCascades();
+        // 4. Hierarchy Info
+        ImGui::Spacing();
+        if (ImGui::CollapsingHeader("Hierarchy Info")) {
+            if (ImGui::BeginTable("HierarchyTable", 2, ImGuiTableFlags_SizingStretchProp)) {
+                ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 80.0f);
+                ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+                
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn();
+                ImGui::Text("Parent");
+                ImGui::TableNextColumn();
+                if (g_SelectedNode->parent) {
+                    ImGui::Text("%s", g_SelectedNode->parent->name.empty() ? "Unnamed" : g_SelectedNode->parent->name.c_str());
+                } else {
+                    ImGui::Text("None (Root)");
+                }
+                
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn();
+                ImGui::Text("Children");
+                ImGui::TableNextColumn();
+                ImGui::Text("%zu", g_SelectedNode->children.size());
+                
+                ImGui::EndTable();
+            }
         }
     } else {
         s_LastSelectedNode = nullptr;
@@ -482,4 +671,56 @@ void DrawMaterialEditorPanel() {
 
     ImGui::End();
 }
+
+void DrawConsolePanel() {
+    ImGui::Begin("Console");
+    
+    auto sink = Log::GetConsoleSink();
+    if (!sink) {
+        ImGui::Text("Console sink not initialized.");
+        ImGui::End();
+        return;
+    }
+
+    if (ImGui::Button("Clear")) {
+        sink->clear();
+    }
+    ImGui::SameLine();
+    
+    static bool autoScroll = true;
+    ImGui::Checkbox("Auto-scroll", &autoScroll);
+    
+    ImGui::Separator();
+    
+    ImGui::BeginChild("ScrollingRegion", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
+    
+    auto messages = sink->get_messages();
+    
+    for (const auto& msg : messages) {
+        ImVec4 color;
+        bool hasColor = true;
+        
+        switch (msg.level) {
+            case spdlog::level::trace:    color = ImVec4(0.5f, 0.5f, 0.5f, 1.0f); break; // Gray
+            case spdlog::level::debug:    color = ImVec4(0.2f, 0.7f, 0.2f, 1.0f); break; // Green
+            case spdlog::level::info:     color = ImVec4(0.8f, 0.8f, 0.8f, 1.0f); break; // White
+            case spdlog::level::warn:     color = ImVec4(1.0f, 0.8f, 0.2f, 1.0f); break; // Yellow
+            case spdlog::level::err:      color = ImVec4(1.0f, 0.3f, 0.3f, 1.0f); break; // Red
+            case spdlog::level::critical: color = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); break; // Bright Red
+            default: hasColor = false; break;
+        }
+        
+        if (hasColor) ImGui::PushStyleColor(ImGuiCol_Text, color);
+        ImGui::TextUnformatted(msg.text.c_str());
+        if (hasColor) ImGui::PopStyleColor();
+    }
+    
+    if (autoScroll && ImGui::GetScrollY() >= ImGui::GetScrollMaxY()) {
+        ImGui::SetScrollHereY(1.0f);
+    }
+    
+    ImGui::EndChild();
+    ImGui::End();
+}
+
 } // namespace Editor

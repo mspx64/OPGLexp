@@ -73,6 +73,8 @@ node_modules/
 packages/
 *.nuget.props
 *.nuget.targets
+vcpkg/
+vcpkg_installed/
 
 # Python cache (if using scripts/tools)
 __pycache__/

@@ -2,9 +2,11 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 #include <algorithm>
+#include <unordered_set>
+#include <unordered_map>
 
 #include "GltfLoader.h"
-#include "helpers/Logger.h"
+#include "Helpers/Logger.h"
 
 namespace lgt {
 
@@ -51,6 +53,71 @@ void Scene::RemoveNode(SceneNode* nodeToRemove) {
                 return root.get() == nodeToRemove;
             }), m_RootNodes.end());
     }
+    
+    CleanUpMaterials();
+}
+
+void Scene::CleanUpMaterials() {
+    std::unordered_set<uint32_t> usedIndices;
+    
+    auto collectIndices = [&](auto& self, SceneNode* node) -> void {
+        if (!node) return;
+        for (auto& mesh : node->meshes) {
+            usedIndices.insert(mesh.materialIndex);
+        }
+        for (auto& child : node->children) {
+            self(self, child.get());
+        }
+    };
+    
+    for (auto& root : m_RootNodes) {
+        collectIndices(collectIndices, root.get());
+    }
+    
+    for (auto it = lgt::g_MaterialBRDF.begin(); it != lgt::g_MaterialBRDF.end(); ) {
+        if (usedIndices.find(it->second.gpuIndex) == usedIndices.end()) {
+            it = lgt::g_MaterialBRDF.erase(it);
+        } else {
+            ++it;
+        }
+    }
+    
+    std::unordered_map<uint32_t, uint32_t> indexMapping;
+    std::vector<MaterialGPU> newMaterialBuffer;
+    
+    std::vector<uint32_t> sortedUsedIndices(usedIndices.begin(), usedIndices.end());
+    std::sort(sortedUsedIndices.begin(), sortedUsedIndices.end());
+    
+    for (uint32_t oldIdx : sortedUsedIndices) {
+        uint32_t newIdx = newMaterialBuffer.size();
+        indexMapping[oldIdx] = newIdx;
+        if (oldIdx < m_materialBuffer.size()) {
+            newMaterialBuffer.push_back(m_materialBuffer[oldIdx]);
+        }
+    }
+    
+    auto updateIndices = [&](auto& self, SceneNode* node) -> void {
+        if (!node) return;
+        for (auto& mesh : node->meshes) {
+            if (indexMapping.count(mesh.materialIndex)) {
+                mesh.materialIndex = indexMapping[mesh.materialIndex];
+            }
+        }
+        for (auto& child : node->children) {
+            self(self, child.get());
+        }
+    };
+    for (auto& root : m_RootNodes) {
+        updateIndices(updateIndices, root.get());
+    }
+    
+    for (auto& [name, brdf] : lgt::g_MaterialBRDF) {
+        if (indexMapping.count(brdf.gpuIndex)) {
+            brdf.gpuIndex = indexMapping[brdf.gpuIndex];
+        }
+    }
+    
+    m_materialBuffer = std::move(newMaterialBuffer);
 }
 
 void Scene::Update() {
@@ -59,57 +126,6 @@ void Scene::Update() {
     }
 }
 
-static const char* TextureTypeToString(aiTextureType type) {
-    switch (type) {
-    case aiTextureType_NONE:
-        return "NONE";
-    case aiTextureType_DIFFUSE:
-        return "DIFFUSE";
-    case aiTextureType_SPECULAR:
-        return "SPECULAR";
-    case aiTextureType_AMBIENT:
-        return "AMBIENT";
-    case aiTextureType_EMISSIVE:
-        return "EMISSIVE";
-    case aiTextureType_HEIGHT:
-        return "HEIGHT";
-    case aiTextureType_NORMALS:
-        return "NORMALS";
-    case aiTextureType_SHININESS:
-        return "SHININESS";
-    case aiTextureType_OPACITY:
-        return "OPACITY";
-    case aiTextureType_DISPLACEMENT:
-        return "DISPLACEMENT";
-    case aiTextureType_LIGHTMAP:
-        return "LIGHTMAP";
-    case aiTextureType_REFLECTION:
-        return "REFLECTION";
-    case aiTextureType_BASE_COLOR:
-        return "BASE_COLOR";
-    case aiTextureType_NORMAL_CAMERA:
-        return "NORMAL_CAMERA";
-    case aiTextureType_EMISSION_COLOR:
-        return "EMISSION_COLOR";
-    case aiTextureType_METALNESS:
-        return "METALNESS";
-    case aiTextureType_DIFFUSE_ROUGHNESS:
-        return "DIFFUSE_ROUGHNESS";
-    case aiTextureType_AMBIENT_OCCLUSION:
-        return "AMBIENT_OCCLUSION";
-    case aiTextureType_SHEEN:
-        return "SHEEN";
-    case aiTextureType_CLEARCOAT:
-        return "CLEARCOAT";
-    case aiTextureType_TRANSMISSION:
-        return "TRANSMISSION";
-    case aiTextureType_UNKNOWN:
-        return "UNKNOWN";
-
-    default:
-        return "INVALID";
-    }
-}
 
 std::shared_ptr<SceneNode> Scene::parseNode(aiNode* node, const aiScene* scene, const std::vector<uint32_t>& materialMap) {
 
@@ -160,7 +176,8 @@ Mesh Scene::processMesh(aiMesh* mesh, const std::vector<uint32_t>& materialMap) 
 
     Mesh glMesh;
     uint32_t globalMaterialIndex = materialMap[mesh->mMaterialIndex];
-    glMesh.setup(vertices, indices, globalMaterialIndex);
+    std::string meshName = mesh->mName.length > 0 ? mesh->mName.C_Str() : "Unnamed Mesh";
+    glMesh.setup(meshName, vertices, indices, globalMaterialIndex);
 
     return glMesh;
 }

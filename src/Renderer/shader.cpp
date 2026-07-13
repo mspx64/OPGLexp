@@ -2,7 +2,7 @@
 #include "Camera.h"
 
 #include "Renderer.h"
-#include "helpers/Logger.h"
+#include "Helpers/Logger.h"
 
 namespace lgt {
 Pipeline::Pipeline(const std::string& filepath)

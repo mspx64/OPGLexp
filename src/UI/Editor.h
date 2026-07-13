@@ -20,6 +20,7 @@ void DrawEnvironmentPanel(lgt::Grid* grid, lgt::Renderer* renderer);
 void DrawCameraPanel(lgt::Camera* camera, float* speed, float* sensitivity);
 void DrawAssetBrowserPanel(lgt::Scene* scene);
 void DrawInspectorPanel();
+void DrawConsolePanel();
 
 void DrawMaterialEditorPanel();
 // texture

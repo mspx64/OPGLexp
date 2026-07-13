@@ -4,7 +4,8 @@
 #include "Renderer/Camera.h"
 #include "Renderer/Renderer.h"
 #include "UI/Editor.h"
-#include "helpers/Logger.h"
+#include "Helpers/Logger.h"
+#include <fstream>
 
 #define MAIN        void main()
 #define MAIN_RETURN return
@@ -33,7 +34,89 @@ int main() {
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    
+    // Load a professional-looking font at a larger size
+    ImFontConfig fontConfig;
+    fontConfig.OversampleH = 2;
+    fontConfig.OversampleV = 2;
+    // Segoe UI is practically the Windows default font and looks very clean. 
+    io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\segoeui.ttf", 24.0f, &fontConfig);
+    
     Editor::ApplyProfessionalTheme();
+
+    // Check if imgui.ini exists, if not, load default layout
+    if (io.IniFilename) {
+        std::ifstream iniFile(io.IniFilename);
+        if (!iniFile.good()) {
+            const char* default_layout = R"(
+[Window][WindowOverViewport_11111111]
+Pos=0,0
+Size=1920,1055
+Collapsed=0
+
+[Window][Debug##Default]
+Pos=60,60
+Size=400,400
+Collapsed=0
+
+[Window][Viewport]
+Pos=314,0
+Size=1222,718
+Collapsed=0
+DockId=0x00000009,0
+
+[Window][Material Editor]
+Pos=1538,0
+Size=382,528
+Collapsed=0
+DockId=0x00000003,0
+
+[Window][Scene Hierarchy]
+Pos=0,0
+Size=312,549
+Collapsed=0
+DockId=0x00000007,0
+
+[Window][Environment & Renderer]
+Pos=1538,530
+Size=382,525
+Collapsed=0
+DockId=0x00000004,0
+
+[Window][Camera Controls]
+Pos=1538,530
+Size=382,525
+Collapsed=0
+DockId=0x00000004,1
+
+[Window][Asset Browser]
+Pos=314,720
+Size=1222,335
+Collapsed=0
+DockId=0x0000000A,0
+
+[Window][Inspector]
+Pos=0,551
+Size=312,504
+Collapsed=0
+DockId=0x00000008,0
+
+[Docking][Data]
+DockSpace       ID=0x08BD597D Window=0x1BBC0F80 Pos=0,0 Size=1920,1055 Split=X
+  DockNode      ID=0x00000005 Parent=0x08BD597D SizeRef=312,1055 Split=Y Selected=0xB8729153
+    DockNode    ID=0x00000007 Parent=0x00000005 SizeRef=473,549 Selected=0xB8729153
+    DockNode    ID=0x00000008 Parent=0x00000005 SizeRef=473,504 Selected=0x36DC96AB
+  DockNode      ID=0x00000006 Parent=0x08BD597D SizeRef=1606,1055 Split=X
+    DockNode    ID=0x00000001 Parent=0x00000006 SizeRef=1222,1055 Split=Y Selected=0xC450F867
+      DockNode  ID=0x00000009 Parent=0x00000001 SizeRef=1107,718 CentralNode=1 Selected=0xC450F867
+      DockNode  ID=0x0000000A Parent=0x00000001 SizeRef=1107,335 Selected=0x36AF052B
+    DockNode    ID=0x00000002 Parent=0x00000006 SizeRef=382,1055 Split=Y Selected=0x3D0FF072
+      DockNode  ID=0x00000003 Parent=0x00000002 SizeRef=336,528 Selected=0x3D0FF072
+      DockNode  ID=0x00000004 Parent=0x00000002 SizeRef=336,525 Selected=0x5FB1F84F
+)";
+            ImGui::LoadIniSettingsFromMemory(default_layout);
+        }
+    }
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("# version 460");
@@ -51,13 +134,13 @@ int main() {
 
     // Models are now loaded dynamically via the Asset Browser panel at runtime
 
-    int           currentMode = 0;
+
     lgt::Renderer renderer(&scene, &camera);
     renderer.init();
     
     lgt::Grid grid;
     lgt::FrameBuffer framebuffer(width, height);
-    float camSpeed = 0.001f;
+    float camSpeed = 0.05f;
     float camSensitivity = 20.0f;
     float deltaTime = 0.016f; // mock deltaTime for now
 
@@ -72,7 +155,6 @@ int main() {
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f); // Default background color for the dockspace
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        camera.update(window, camSpeed, camSensitivity);
         // scene.Update();
 
         ImGui_ImplOpenGL3_NewFrame();
@@ -84,6 +166,9 @@ int main() {
         // Viewport Panel & 3D Rendering
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
         ImGui::Begin("Viewport");
+        bool viewportHovered = ImGui::IsWindowHovered();
+        camera.update(window, camSpeed, camSensitivity, viewportHovered);
+        
         ImVec2 viewportSize = ImGui::GetContentRegionAvail();
         if (viewportSize.x > 0.0f && viewportSize.y > 0.0f) {
             // Resize FBO and Camera if the viewport changed
@@ -115,6 +200,7 @@ int main() {
         Editor::DrawCameraPanel(&camera, &camSpeed, &camSensitivity);
         Editor::DrawAssetBrowserPanel(&scene);
         Editor::DrawInspectorPanel();
+        Editor::DrawConsolePanel();
 
         ImGui::Render();
 
@@ -127,6 +213,7 @@ int main() {
         } else if (glfwGetKey(window, GLFW_KEY_R) == GLFW_RELEASE && rKeyWasPressed)
             rKeyWasPressed = false;
         if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS && !fKeyWasPressed) {
+            int currentMode = (int)renderer.getDebugMode();
             currentMode = (currentMode + 1) % 11;
             renderer.setDebugMode((lgt::DebugMode)(currentMode));
             fKeyWasPressed = true;

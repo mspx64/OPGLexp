@@ -52,6 +52,7 @@ public:
     void Update();
     void Clear();
     void RemoveNode(SceneNode* node);
+    void CleanUpMaterials();
 
     const std::vector<std::shared_ptr<SceneNode>>& getRootNodes() const { return m_RootNodes; }
     std::vector<MaterialGPU>&                      getMaterialBuffer() { return m_materialBuffer; };

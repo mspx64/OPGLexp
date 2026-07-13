@@ -18,7 +18,7 @@ private:
 
 public:
     Camera(int width, int height, glm::vec3 positon);
-    void            update(GLFWwindow* window, const float& speed, const float& sensitivity);
+    void            update(GLFWwindow* window, const float& speed, const float& sensitivity, bool canCapture = false);
     glm::vec3       getPosition();
     glm::vec3       getFront();
     const glm::mat4 GetViewMatrix();

@@ -1,6 +1,6 @@
 #include "Material.h"
 
-#include "helpers/Logger.h"
+#include "Helpers/Logger.h"
 
 namespace lgt {
 

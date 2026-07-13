@@ -104,9 +104,14 @@ private:
 };
 
 std::shared_ptr<spdlog::logger> Log::s_CoreLogger;
+std::shared_ptr<ImGuiConsoleSink> Log::s_ConsoleSink;
 
 std::shared_ptr<spdlog::logger>& Log::Core() {
     return s_CoreLogger;
+}
+
+std::shared_ptr<ImGuiConsoleSink> Log::GetConsoleSink() {
+    return s_ConsoleSink;
 }
 
 void Log::Init() {
@@ -139,8 +144,13 @@ void Log::Init() {
     fileSink->set_pattern_for_level(spdlog::level::err, "[%Y-%m-%d %T.%e] [E] [thread %t] [%n] [%s:%#] [%!] %v");
     fileSink->set_pattern_for_level(spdlog::level::critical, "[%Y-%m-%d %T.%e] [C] [thread %t] [%n] [%s:%#] [%!] %v");
 
+    // ImGui Console Sink
+    s_ConsoleSink = std::make_shared<ImGuiConsoleSink>();
+    s_ConsoleSink->set_level(spdlog::level::trace);
+    s_ConsoleSink->set_pattern("[%T] [%l] %v");
+
     s_CoreLogger = std::make_shared<spdlog::async_logger>(
-        "RENDERX", spdlog::sinks_init_list{consoleSink, fileSink}, spdlog::thread_pool(), spdlog::async_overflow_policy::block);
+        "RENDERX", spdlog::sinks_init_list{consoleSink, fileSink, s_ConsoleSink}, spdlog::thread_pool(), spdlog::async_overflow_policy::block);
 
     s_CoreLogger->set_level(spdlog::level::trace);
     s_CoreLogger->flush_on(spdlog::level::err);

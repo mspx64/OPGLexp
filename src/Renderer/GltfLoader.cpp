@@ -11,6 +11,20 @@
 #include <iostream>
 
 namespace loader::assimp {
+static GLenum MapAssimpWrapMode(aiTextureMapMode mode) {
+    switch (mode) {
+    case aiTextureMapMode_Wrap:
+        return GL_REPEAT;
+    case aiTextureMapMode_Clamp:
+        return GL_CLAMP_TO_EDGE;
+    case aiTextureMapMode_Mirror:
+        return GL_MIRRORED_REPEAT;
+    case aiTextureMapMode_Decal:
+        return GL_CLAMP_TO_BORDER;
+    default:
+        return GL_REPEAT; //  fallback
+    }
+}
 
 struct TextureMapping {
     aiTextureType    assimpType;
@@ -106,12 +120,26 @@ std::vector<uint32_t> ProcaessMaterials(const aiScene* scene, const std::string&
                     materialBrdf.textures.push_back(std::move(texInfo));
                 }
             } else {
+                if (mapping.engineType == lgt::TextureType::BASE_COLOR) {
+                    lgt::MaterialTextureAccess texInfo{};
+                    texInfo.type          = mapping.engineType;
+                    texInfo.textureId     = "FALLBACK_TEXTURE_WHITE";
+                    texInfo.textureHandle = lgt::GetTexture("FALLBACK_TEXTURE_WHITE").handle;
+
+                    texInfo.samplerState.wrapModeS = GL_REPEAT;
+                    texInfo.samplerState.wrapModeT = GL_REPEAT;
+                    texInfo.samplerState.minFilter = GL_LINEAR;
+                    texInfo.samplerState.magFilter = GL_LINEAR;
+
+                    texInfo.bindlessHandle = lgt::GetBindlessTextureSamplerHandle(texInfo.textureHandle, texInfo.samplerState);
+                    materialBrdf.textures.push_back(std::move(texInfo));
+                }
             }
         }
 
         materialBrdf.gpuIndex = static_cast<uint32_t>(lgt::g_MaterialGPU.size());
         materialMap[i] = materialBrdf.gpuIndex;
-        lgt::g_MaterialGPU.push_back(std::move(materialBrdf.ToMaterialGPU()));
+        lgt::g_MaterialGPU.push_back(materialBrdf.ToMaterialGPU());
         lgt::g_MaterialBRDF[mat->GetName().C_Str()] = std::move(materialBrdf);
     }
 

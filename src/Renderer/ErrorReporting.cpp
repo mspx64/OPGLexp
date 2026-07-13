@@ -1,5 +1,5 @@
-﻿#include "ErrorReporting.h"
-#include "helpers/Logger.h"
+#include "Helpers/Logger.h"
+#include "ErrorReporting.h"
 
 void GLAPIENTRY glDebugOutput(
     GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei length, const char* message, const void* userParam) {
