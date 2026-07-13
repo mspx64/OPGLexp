@@ -1,3 +1,0 @@
-D:/DEV/cpp/OPGLexp/build/CMakeFiles/OPGLexp.dir
-D:/DEV/cpp/OPGLexp/build/CMakeFiles/edit_cache.dir
-D:/DEV/cpp/OPGLexp/build/CMakeFiles/rebuild_cache.dir

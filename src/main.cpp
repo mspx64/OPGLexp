@@ -130,7 +130,7 @@ DockSpace       ID=0x08BD597D Window=0x1BBC0F80 Pos=0,0 Size=1920,1055 Split=X
     CORE_INFO("{}", (char*)glGetString(GL_RENDERER));
 
     lgt::Scene  scene;
-    lgt::Camera camera((int)width, (int)height, glm::vec3(0.0f));
+    lgt::Camera camera((int)width, (int)height, glm::vec3(0.0f, 1.5f, 3.0f));
 
     // Models are now loaded dynamically via the Asset Browser panel at runtime
 
