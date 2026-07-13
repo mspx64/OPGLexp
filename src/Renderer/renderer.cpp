@@ -91,7 +91,7 @@ void Grid::render(Camera& cam, float deltaTime) {
     glDepthMask(GL_FALSE);
 
     // Use RAII shader binding
-
+    m_gridShader->use();
     // Set matrices
     glm::mat4 model = glm::mat4(1.0f);
     m_gridShader->setMat4("u_model", model);
@@ -279,6 +279,13 @@ void Renderer::setDebugMode(DebugMode mode) {
 }
 
 void Renderer::createMaterailBuffer(size_t size) {
+    if (size == 0) size = 1; // Prevent GL_INVALID_VALUE on empty scenes
+    
+    if (g_MaterialSSBO != 0) {
+        glDeleteBuffers(1, &g_MaterialSSBO);
+        g_MaterialSSBO = 0;
+    }
+    
     glCreateBuffers(1, &g_MaterialSSBO);
     glNamedBufferStorage(g_MaterialSSBO, size * sizeof(MaterialGPU), nullptr, GL_DYNAMIC_STORAGE_BIT);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, g_MaterialSSBO);
@@ -469,6 +476,16 @@ void Renderer::render() {
     if (!testPipeline) {
         CORE_ERROR("No pipeline available");
         return;
+    }
+
+    // Dynamically rebuild and upload the Material SSBO if new models/materials were loaded
+    static size_t lastMaterialCount = 0;
+    if (g_MaterialGPU.size() != lastMaterialCount) {
+        lastMaterialCount = g_MaterialGPU.size();
+        createMaterailBuffer(lastMaterialCount);
+        if (lastMaterialCount > 0) {
+            uploadMaterialBuffer(g_MaterialGPU.data(), lastMaterialCount);
+        }
     }
 
     testPipeline->useWithCamera(*camera_);

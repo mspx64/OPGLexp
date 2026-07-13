@@ -49,14 +49,17 @@ int main() {
     lgt::Scene  scene;
     lgt::Camera camera((int)width, (int)height, glm::vec3(0.0f));
 
-    scene.LoadGltf("res/modles/Lanten/lantern_fbx.fbx");
-    scene.LoadGltf("res/modles/Helmet/DamagedHelmet.gltf");
-    // scene.LoadGltf("res/modles/sopnza_palace/sponza_palace.gltf");
-    // scene.LoadGltf("res/modles/car/scene.gltf");
+    // Models are now loaded dynamically via the Asset Browser panel at runtime
 
     int           currentMode = 0;
     lgt::Renderer renderer(&scene, &camera);
     renderer.init();
+    
+    lgt::Grid grid;
+    lgt::FrameBuffer framebuffer(width, height);
+    float camSpeed = 0.001f;
+    float camSensitivity = 20.0f;
+    float deltaTime = 0.016f; // mock deltaTime for now
 
     bool rKeyWasPressed = false;
     bool fKeyWasPressed = false;
@@ -66,11 +69,23 @@ int main() {
 
         glfwPollEvents();
 
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f); // Default background color for the dockspace
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-        camera.update(window, 0.001f, 20.0f);
+        camera.update(window, camSpeed, camSensitivity);
         // scene.Update();
+
+        // 3D Scene Rendering to FBO
+        framebuffer.Use();
+        glClearColor(0.05f, 0.05f, 0.05f, 1.0f); // Viewport background color
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        
+        // Match renderer viewport to the FBO size
+        renderer.setViewport(framebuffer.GetWidth(), framebuffer.GetHeight());
+        renderer.render();
+        grid.render(camera, deltaTime);
+        
+        framebuffer.Unuse();
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -80,10 +95,13 @@ int main() {
 
         Editor::DrawMaterialEditorPanel();
         Editor::DrawSceneHierarchyPanel(&scene);
-        Editor::DrawPerformancePanel(&renderer);
+        Editor::DrawViewportPanel(&framebuffer);
+        Editor::DrawEnvironmentPanel(&grid, &renderer);
+        Editor::DrawCameraPanel(&camera, &camSpeed, &camSensitivity);
+        Editor::DrawAssetBrowserPanel(&scene);
+        Editor::DrawInspectorPanel();
 
         ImGui::Render();
-        renderer.render();
 
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 

@@ -1,12 +1,21 @@
 #include "Renderer/Material.h"
 #include "Renderer/Renderer.h"
 #include "Renderer/Scene.h"
+#include "Renderer/Camera.h"
 #include "Editor.h"
 
 #include <imgui.h>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
+#include <glm/gtx/quaternion.hpp>
+#include <filesystem>
 #include <string>
 #include <vector>
 #include <unordered_map>
+
+using namespace lgt;
+
+static lgt::SceneNode* g_SelectedNode = nullptr;
 
 namespace Editor {
 
@@ -69,40 +78,6 @@ void ApplyProfessionalTheme() {
     colors[ImGuiCol_NavHighlight]           = ImVec4(0.16f, 0.51f, 0.86f, 1.00f);
 }
 
-void DrawPerformancePanel(lgt::Renderer* renderer) {
-    if (!renderer) return;
-
-    ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove;
-    const float PAD = 10.0f;
-    const ImGuiViewport* viewport = ImGui::GetMainViewport();
-    ImVec2 work_pos = viewport->WorkPos;
-    ImVec2 work_size = viewport->WorkSize;
-    ImVec2 window_pos, window_pos_pivot;
-    
-    // Top-right corner
-    window_pos.x = work_pos.x + work_size.x - PAD;
-    window_pos.y = work_pos.y + PAD;
-    window_pos_pivot.x = 1.0f;
-    window_pos_pivot.y = 0.0f;
-    
-    ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
-    ImGui::SetNextWindowBgAlpha(0.7f); // Transparent background
-
-    if (ImGui::Begin("Performance Overlay", nullptr, window_flags)) {
-        ImGui::Text("=== SYSTEM METRICS ===");
-        ImGui::Separator();
-        float fps = renderer->getFPS();
-        ImGui::Text("FPS:         %.1f", fps);
-        ImGui::Text("Frame Time:  %.3f ms", fps > 0.0f ? 1000.0f / fps : 0.0f);
-        ImGui::Separator();
-        ImGui::Text("=== GPU INFO ===");
-        ImGui::Text("Vendor:      %s", (const char*)glGetString(GL_VENDOR));
-        ImGui::Text("Renderer:    %s", (const char*)glGetString(GL_RENDERER));
-        ImGui::Separator();
-        ImGui::Text("Render Mode: %d", (int)renderer->getRenderMode());
-    }
-    ImGui::End();
-}
 
 static void DrawSceneNodeRecursive(lgt::SceneNode* node) {
     if (!node) return;
@@ -113,7 +88,16 @@ static void DrawSceneNodeRecursive(lgt::SceneNode* node) {
     }
     
     std::string displayName = node->name.empty() ? "Unnamed Node" : node->name;
+    
+    if (node == g_SelectedNode) {
+        flags |= ImGuiTreeNodeFlags_Selected;
+    }
+    
     bool nodeOpen = ImGui::TreeNodeEx((void*)node, flags, "%s", displayName.c_str());
+    
+    if (ImGui::IsItemClicked()) {
+        g_SelectedNode = node;
+    }
     
     if (nodeOpen && !(flags & ImGuiTreeNodeFlags_Leaf)) {
         // Render child meshes
@@ -136,6 +120,167 @@ void DrawSceneHierarchyPanel(lgt::Scene* scene) {
     for (auto& root : roots) {
         DrawSceneNodeRecursive(root.get());
     }
+    ImGui::End();
+}
+
+void DrawViewportPanel(lgt::FrameBuffer* fbo) {
+    if (!fbo) return;
+    
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+    ImGui::Begin("Viewport");
+    
+    ImVec2 viewportSize = ImGui::GetContentRegionAvail();
+    if (viewportSize.x > 0.0f && viewportSize.y > 0.0f) {
+        // Only resize if the dimensions have changed
+        if (fbo->GetWidth() != static_cast<int>(viewportSize.x) || fbo->GetHeight() != static_cast<int>(viewportSize.y)) {
+            fbo->Resize(static_cast<int>(viewportSize.x), static_cast<int>(viewportSize.y));
+        }
+        
+        // Render the texture (Note: ImGui requires casting GLuint to void*)
+        // OpenGL textures are upside down in ImGui by default, so we flip the UVs
+        ImGui::Image((ImTextureID)(intptr_t)fbo->GetTextureId(), viewportSize, ImVec2(0, 1), ImVec2(1, 0));
+    }
+    
+    ImGui::End();
+    ImGui::PopStyleVar();
+}
+
+void DrawEnvironmentPanel(lgt::Grid* grid, lgt::Renderer* renderer) {
+    ImGui::Begin("Environment & Renderer");
+    
+    if (ImGui::CollapsingHeader("Renderer Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
+        if (renderer) {
+            int currentMode = (int)renderer->getRenderMode();
+            const char* items[] = { "Fill", "Wireframe", "Point" };
+            if (ImGui::Combo("Render Mode", &currentMode, items, IM_ARRAYSIZE(items))) {
+                renderer->setRenderMode((lgt::RenderMode)currentMode);
+            }
+        }
+    }
+    
+    if (ImGui::CollapsingHeader("Grid Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
+        if (grid) {
+            lgt::GridSettings& settings = grid->getSetting();
+            ImGui::Checkbox("Enable Grid", &settings.enableGrid);
+            if (settings.enableGrid) {
+                ImGui::ColorEdit3("Base Color", &settings.baseColor.x);
+                ImGui::Checkbox("Enable Gradient", &settings.enableGradient);
+                if (settings.enableGradient) {
+                    ImGui::ColorEdit3("Gradient Color", &settings.gradientColor.x);
+                }
+                ImGui::SliderFloat("Fade Distance", &settings.fadeDistance, 10.0f, 200.0f);
+                ImGui::SliderFloat("Grid Intensity", &settings.gridIntensity, 0.0f, 1.0f);
+                
+                ImGui::Checkbox("Enable Animation", &settings.enableAnimation);
+                if (settings.enableAnimation) {
+                    ImGui::SliderFloat("Wave Amplitude", &settings.waveAmplitude, 0.0f, 2.0f);
+                    ImGui::SliderFloat("Wave Frequency", &settings.waveFrequency, 0.0f, 2.0f);
+                }
+            }
+        }
+    }
+    
+    ImGui::End();
+}
+
+void DrawCameraPanel(lgt::Camera* camera, float* speed, float* sensitivity) {
+    if (!camera) return;
+    
+    ImGui::Begin("Camera Controls");
+    
+    if (ImGui::CollapsingHeader("Movement Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
+        if (speed) ImGui::SliderFloat("Move Speed", speed, 0.0001f, 0.01f, "%.4f");
+        if (sensitivity) ImGui::SliderFloat("Sensitivity", sensitivity, 1.0f, 100.0f);
+    }
+    
+    if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
+        glm::vec3 pos = camera->GetCameraPos();
+        glm::vec3 dir = camera->GetDirection();
+        
+        ImGui::Text("Position: X: %.2f  Y: %.2f  Z: %.2f", pos.x, pos.y, pos.z);
+        ImGui::Text("Direction: X: %.2f  Y: %.2f  Z: %.2f", dir.x, dir.y, dir.z);
+    }
+    
+    ImGui::End();
+}
+
+void DrawAssetBrowserPanel(lgt::Scene* scene) {
+    if (!scene) return;
+    
+    ImGui::Begin("Asset Browser");
+    
+    std::filesystem::path modelsPath = "res/modles"; // Correcting typo locally if needed, but sticking to existing structure
+    if (!std::filesystem::exists(modelsPath)) {
+        modelsPath = "res/models"; // Fallback to correct spelling just in case
+    }
+    
+    if (std::filesystem::exists(modelsPath)) {
+        for (auto& entry : std::filesystem::recursive_directory_iterator(modelsPath)) {
+            if (entry.is_regular_file()) {
+                std::string ext = entry.path().extension().string();
+                if (ext == ".gltf" || ext == ".glb" || ext == ".fbx") {
+                    std::string filename = entry.path().filename().string();
+                    if (ImGui::Button(filename.c_str(), ImVec2(ImGui::GetContentRegionAvail().x, 0))) {
+                        scene->LoadGltf(entry.path().string());
+                    }
+                }
+            }
+        }
+    } else {
+        ImGui::Text("Models directory not found.");
+    }
+    
+    ImGui::End();
+}
+
+void DrawInspectorPanel() {
+    ImGui::Begin("Inspector");
+    
+    static lgt::SceneNode* s_LastSelectedNode = nullptr;
+    static glm::vec3 s_Translation(0.0f);
+    static glm::vec3 s_RotationEuler(0.0f);
+    static glm::vec3 s_Scale(1.0f);
+
+    if (g_SelectedNode) {
+        if (g_SelectedNode != s_LastSelectedNode) {
+            s_LastSelectedNode = g_SelectedNode;
+            
+            // Decompose the localTransform matrix only once upon selection
+            glm::quat rotationQuat;
+            glm::vec3 skew;
+            glm::vec4 perspective;
+            glm::decompose(g_SelectedNode->localTransform, s_Scale, rotationQuat, s_Translation, skew, perspective);
+            
+            // Convert quaternion to Euler angles (in degrees for UI)
+            s_RotationEuler = glm::degrees(glm::eulerAngles(rotationQuat));
+        }
+
+        ImGui::Text("Selected: %s", g_SelectedNode->name.empty() ? "Unnamed Node" : g_SelectedNode->name.c_str());
+        ImGui::Separator();
+        
+        bool modified = false;
+        
+        if (ImGui::DragFloat3("Translation", glm::value_ptr(s_Translation), 0.1f)) modified = true;
+        if (ImGui::DragFloat3("Rotation", glm::value_ptr(s_RotationEuler), 1.0f)) modified = true;
+        if (ImGui::DragFloat3("Scale", glm::value_ptr(s_Scale), 0.1f)) modified = true;
+        
+        if (modified) {
+            // Reconstruct the transformation matrix from our cached TRS components
+            glm::quat newRot = glm::quat(glm::radians(s_RotationEuler));
+            glm::mat4 newTransform = glm::translate(glm::mat4(1.0f), s_Translation) * 
+                                     glm::mat4_cast(newRot) * 
+                                     glm::scale(glm::mat4(1.0f), s_Scale);
+            
+            g_SelectedNode->localTransform = newTransform;
+            
+            // Recalculate global transforms down the hierarchy
+            g_SelectedNode->UpdateTransformCascades();
+        }
+    } else {
+        s_LastSelectedNode = nullptr;
+        ImGui::Text("No node selected.");
+    }
+    
     ImGui::End();
 }
 

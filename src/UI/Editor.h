@@ -8,12 +8,19 @@
 namespace lgt {
 class Renderer;
 class Scene;
+class Camera;
+class FrameBuffer;
+class Grid;
 }
 
 namespace Editor {
 void ApplyProfessionalTheme();
-void DrawPerformancePanel(lgt::Renderer* renderer);
 void DrawSceneHierarchyPanel(lgt::Scene* scene);
+void DrawViewportPanel(lgt::FrameBuffer* fbo);
+void DrawEnvironmentPanel(lgt::Grid* grid, lgt::Renderer* renderer);
+void DrawCameraPanel(lgt::Camera* camera, float* speed, float* sensitivity);
+void DrawAssetBrowserPanel(lgt::Scene* scene);
+void DrawInspectorPanel();
 
 void DrawMaterialEditorPanel();
 // texture
