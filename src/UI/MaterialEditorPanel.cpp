@@ -23,121 +23,127 @@ namespace Editor {
 
 void ApplyProfessionalTheme() {
     ImGuiStyle& style = ImGui::GetStyle();
-    
+
     // Unity-style slightly rounded edges
-    style.WindowRounding = 0.0f;
-    style.ChildRounding = 0.0f;
-    style.FrameRounding = 3.0f;
-    style.GrabRounding = 3.0f;
-    style.PopupRounding = 0.0f;
+    style.WindowRounding    = 0.0f;
+    style.ChildRounding     = 0.0f;
+    style.FrameRounding     = 3.0f;
+    style.GrabRounding      = 3.0f;
+    style.PopupRounding     = 0.0f;
     style.ScrollbarRounding = 0.0f;
-    style.TabRounding = 2.0f;
-    
+    style.TabRounding       = 2.0f;
+
     // Clean borders
     style.WindowBorderSize = 1.0f;
-    style.FrameBorderSize = 1.0f;
-    style.PopupBorderSize = 1.0f;
-    
+    style.FrameBorderSize  = 1.0f;
+    style.PopupBorderSize  = 1.0f;
+
     ImVec4* colors = style.Colors;
-    
+
     // Unity dark theme colors
-    const ImVec4 bgDark          = ImVec4(0.20f, 0.20f, 0.20f, 1.00f); // Main window bg
-    const ImVec4 bgMedium        = ImVec4(0.24f, 0.24f, 0.24f, 1.00f); // Child bg
-    const ImVec4 bgLight         = ImVec4(0.28f, 0.28f, 0.28f, 1.00f); // Frame bg
-    const ImVec4 bgLighter       = ImVec4(0.35f, 0.35f, 0.35f, 1.00f); // Hover bg
-    const ImVec4 bgActive        = ImVec4(0.40f, 0.40f, 0.40f, 1.00f); // Active bg
-    const ImVec4 highlightBlue   = ImVec4(0.17f, 0.36f, 0.53f, 1.00f); // Unity selection blue
+    const ImVec4 bgDark             = ImVec4(0.20f, 0.20f, 0.20f, 1.00f); // Main window bg
+    const ImVec4 bgMedium           = ImVec4(0.24f, 0.24f, 0.24f, 1.00f); // Child bg
+    const ImVec4 bgLight            = ImVec4(0.28f, 0.28f, 0.28f, 1.00f); // Frame bg
+    const ImVec4 bgLighter          = ImVec4(0.35f, 0.35f, 0.35f, 1.00f); // Hover bg
+    const ImVec4 bgActive           = ImVec4(0.40f, 0.40f, 0.40f, 1.00f); // Active bg
+    const ImVec4 highlightBlue      = ImVec4(0.17f, 0.36f, 0.53f, 1.00f); // Unity selection blue
     const ImVec4 highlightBlueHover = ImVec4(0.20f, 0.42f, 0.62f, 1.00f);
-    
-    colors[ImGuiCol_Text]                   = ImVec4(0.90f, 0.90f, 0.90f, 1.00f);
-    colors[ImGuiCol_TextDisabled]           = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
-    
-    colors[ImGuiCol_WindowBg]               = bgDark;
-    colors[ImGuiCol_ChildBg]                = bgMedium;
-    colors[ImGuiCol_PopupBg]                = ImVec4(0.18f, 0.18f, 0.18f, 0.95f);
-    
-    colors[ImGuiCol_Border]                 = ImVec4(0.10f, 0.10f, 0.10f, 0.80f);
-    colors[ImGuiCol_BorderShadow]           = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
-    
-    colors[ImGuiCol_FrameBg]                = bgLight;
-    colors[ImGuiCol_FrameBgHovered]         = bgLighter;
-    colors[ImGuiCol_FrameBgActive]          = bgActive;
-    
-    colors[ImGuiCol_TitleBg]                = bgDark;
-    colors[ImGuiCol_TitleBgActive]          = bgDark;
-    colors[ImGuiCol_TitleBgCollapsed]       = bgDark;
-    
-    colors[ImGuiCol_MenuBarBg]              = bgDark;
-    
-    colors[ImGuiCol_ScrollbarBg]            = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);
-    colors[ImGuiCol_ScrollbarGrab]          = ImVec4(0.35f, 0.35f, 0.35f, 1.00f);
-    colors[ImGuiCol_ScrollbarGrabHovered]   = ImVec4(0.45f, 0.45f, 0.45f, 1.00f);
-    colors[ImGuiCol_ScrollbarGrabActive]    = ImVec4(0.55f, 0.55f, 0.55f, 1.00f);
-    
-    colors[ImGuiCol_CheckMark]              = ImVec4(0.85f, 0.85f, 0.85f, 1.00f);
-    colors[ImGuiCol_SliderGrab]             = highlightBlue;
-    colors[ImGuiCol_SliderGrabActive]       = highlightBlueHover;
-    
-    colors[ImGuiCol_Button]                 = bgLight;
-    colors[ImGuiCol_ButtonHovered]          = bgLighter;
-    colors[ImGuiCol_ButtonActive]           = bgActive;
-    
-    colors[ImGuiCol_Header]                 = bgMedium;
-    colors[ImGuiCol_HeaderHovered]          = bgLighter;
-    colors[ImGuiCol_HeaderActive]           = highlightBlue;
-    
-    colors[ImGuiCol_Separator]              = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
-    colors[ImGuiCol_SeparatorHovered]       = bgLighter;
-    colors[ImGuiCol_SeparatorActive]        = highlightBlue;
-    
-    colors[ImGuiCol_ResizeGrip]             = ImVec4(0.20f, 0.20f, 0.20f, 0.00f);
-    colors[ImGuiCol_ResizeGripHovered]      = bgLighter;
-    colors[ImGuiCol_ResizeGripActive]       = highlightBlue;
-    
-    colors[ImGuiCol_Tab]                    = bgDark;
-    colors[ImGuiCol_TabHovered]             = bgLighter;
-    colors[ImGuiCol_TabActive]              = bgMedium;
-    colors[ImGuiCol_TabUnfocused]           = bgDark;
-    colors[ImGuiCol_TabUnfocusedActive]     = bgMedium;
-    
-    colors[ImGuiCol_TextSelectedBg]         = highlightBlue;
-    colors[ImGuiCol_NavHighlight]           = highlightBlue;
+
+    colors[ImGuiCol_Text]         = ImVec4(0.90f, 0.90f, 0.90f, 1.00f);
+    colors[ImGuiCol_TextDisabled] = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
+
+    colors[ImGuiCol_WindowBg] = bgDark;
+    colors[ImGuiCol_ChildBg]  = bgMedium;
+    colors[ImGuiCol_PopupBg]  = ImVec4(0.18f, 0.18f, 0.18f, 0.95f);
+
+    colors[ImGuiCol_Border]       = ImVec4(0.10f, 0.10f, 0.10f, 0.80f);
+    colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+
+    colors[ImGuiCol_FrameBg]        = bgLight;
+    colors[ImGuiCol_FrameBgHovered] = bgLighter;
+    colors[ImGuiCol_FrameBgActive]  = bgActive;
+
+    colors[ImGuiCol_TitleBg]          = bgDark;
+    colors[ImGuiCol_TitleBgActive]    = bgDark;
+    colors[ImGuiCol_TitleBgCollapsed] = bgDark;
+
+    colors[ImGuiCol_MenuBarBg] = bgDark;
+
+    colors[ImGuiCol_ScrollbarBg]          = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);
+    colors[ImGuiCol_ScrollbarGrab]        = ImVec4(0.35f, 0.35f, 0.35f, 1.00f);
+    colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.45f, 0.45f, 0.45f, 1.00f);
+    colors[ImGuiCol_ScrollbarGrabActive]  = ImVec4(0.55f, 0.55f, 0.55f, 1.00f);
+
+    colors[ImGuiCol_CheckMark]        = ImVec4(0.85f, 0.85f, 0.85f, 1.00f);
+    colors[ImGuiCol_SliderGrab]       = highlightBlue;
+    colors[ImGuiCol_SliderGrabActive] = highlightBlueHover;
+
+    colors[ImGuiCol_Button]        = bgLight;
+    colors[ImGuiCol_ButtonHovered] = bgLighter;
+    colors[ImGuiCol_ButtonActive]  = bgActive;
+
+    colors[ImGuiCol_Header]        = bgMedium;
+    colors[ImGuiCol_HeaderHovered] = bgLighter;
+    colors[ImGuiCol_HeaderActive]  = highlightBlue;
+
+    colors[ImGuiCol_Separator]        = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
+    colors[ImGuiCol_SeparatorHovered] = bgLighter;
+    colors[ImGuiCol_SeparatorActive]  = highlightBlue;
+
+    colors[ImGuiCol_ResizeGrip]        = ImVec4(0.20f, 0.20f, 0.20f, 0.00f);
+    colors[ImGuiCol_ResizeGripHovered] = bgLighter;
+    colors[ImGuiCol_ResizeGripActive]  = highlightBlue;
+
+    colors[ImGuiCol_Tab]                = bgDark;
+    colors[ImGuiCol_TabHovered]         = bgLighter;
+    colors[ImGuiCol_TabActive]          = bgMedium;
+    colors[ImGuiCol_TabUnfocused]       = bgDark;
+    colors[ImGuiCol_TabUnfocusedActive] = bgMedium;
+
+    colors[ImGuiCol_TextSelectedBg] = highlightBlue;
+    colors[ImGuiCol_NavHighlight]   = highlightBlue;
 }
 
 static SceneNode* s_NodeToDelete = nullptr;
 
 static void DrawSceneNodeRecursive(lgt::SceneNode* node) {
-    if (!node) return;
-    
-    ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
+    if (!node)
+        return;
+
+    ImGuiTreeNodeFlags flags =
+        ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
     if (node->children.empty() && node->meshes.empty()) {
         flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
     }
-    
+
     std::string displayName = node->name.empty() ? "Unnamed Node" : node->name;
-    
+
     if (node == g_SelectedNode) {
         flags |= ImGuiTreeNodeFlags_Selected;
     }
-    
+
     bool nodeOpen = ImGui::TreeNodeEx((void*)node, flags, "%s", displayName.c_str());
-    
+
     if (ImGui::IsItemClicked(0) || ImGui::IsItemClicked(1)) {
         g_SelectedNode = node;
     }
-    
+
     if (ImGui::BeginPopupContextItem()) {
         if (ImGui::MenuItem("Delete")) {
             s_NodeToDelete = node;
-            if (g_SelectedNode == node) g_SelectedNode = nullptr;
+            if (g_SelectedNode == node)
+                g_SelectedNode = nullptr;
         }
         ImGui::EndPopup();
     }
-    
+
     if (nodeOpen && !(flags & ImGuiTreeNodeFlags_Leaf)) {
         // Render child meshes
         for (size_t i = 0; i < node->meshes.size(); ++i) {
-            ImGui::TreeNodeEx((void*)&node->meshes[i], ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Bullet, "Mesh %zu", i);
+            ImGui::TreeNodeEx((void*)&node->meshes[i],
+                              ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Bullet,
+                              "Mesh %zu",
+                              i);
         }
         // Render child nodes
         for (auto& child : node->children) {
@@ -148,39 +154,46 @@ static void DrawSceneNodeRecursive(lgt::SceneNode* node) {
 }
 
 void DrawSceneHierarchyPanel(lgt::Scene* scene) {
-    if (!scene) return;
-    
+    if (!scene)
+        return;
+
     ImGui::Begin("Scene Hierarchy");
-    
+
+    if (ImGui::BeginPopupContextItem()) {
+        if (ImGui::MenuItem("New Light")) {
+       //     if (g_SelectedNode == node)
+     //           g_SelectedNode = nullptr;
+        }
+        ImGui::EndPopup();
+    }
+
     s_NodeToDelete = nullptr;
-    auto& roots = scene->getRootNodes();
+    auto& roots    = scene->getRootNodes();
     for (auto& root : roots) {
         DrawSceneNodeRecursive(root.get());
     }
-    
+
     if (s_NodeToDelete) {
         scene->RemoveNode(s_NodeToDelete);
         s_NodeToDelete = nullptr;
     }
-    
+
     ImGui::End();
 }
 
-
-
 void DrawEnvironmentPanel(lgt::Grid* grid, lgt::Renderer* renderer) {
     ImGui::Begin("Environment & Renderer");
-    
+
     if (ImGui::CollapsingHeader("Renderer Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
         if (renderer) {
-            int currentMode = (int)renderer->getRenderMode();
-            const char* items[] = { "Fill", "Wireframe", "Point" };
+            int         currentMode = (int)renderer->getRenderMode();
+            const char* items[]     = {"Fill", "Wireframe", "Point"};
             if (ImGui::Combo("Render Mode", &currentMode, items, IM_ARRAYSIZE(items))) {
                 renderer->setRenderMode((lgt::RenderMode)currentMode);
             }
         }
     }
-    
+
     if (ImGui::CollapsingHeader("Grid Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
         if (grid) {
             lgt::GridSettings& settings = grid->getSetting();
@@ -193,7 +206,7 @@ void DrawEnvironmentPanel(lgt::Grid* grid, lgt::Renderer* renderer) {
                 }
                 ImGui::SliderFloat("Fade Distance", &settings.fadeDistance, 10.0f, 200.0f);
                 ImGui::SliderFloat("Grid Intensity", &settings.gridIntensity, 0.0f, 1.0f);
-                
+
                 ImGui::Checkbox("Enable Animation", &settings.enableAnimation);
                 if (settings.enableAnimation) {
                     ImGui::SliderFloat("Wave Amplitude", &settings.waveAmplitude, 0.0f, 2.0f);
@@ -202,47 +215,51 @@ void DrawEnvironmentPanel(lgt::Grid* grid, lgt::Renderer* renderer) {
             }
         }
     }
-    
+
     ImGui::End();
 }
 
 void DrawCameraPanel(lgt::Camera* camera, float* speed, float* sensitivity) {
-    if (!camera) return;
-    
+    if (!camera)
+        return;
+
     ImGui::Begin("Camera Controls");
-    
+
     if (ImGui::CollapsingHeader("Movement Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
-        if (speed) ImGui::SliderFloat("Move Speed", speed, 0.0001f, 0.01f, "%.4f");
-        if (sensitivity) ImGui::SliderFloat("Sensitivity", sensitivity, 1.0f, 100.0f);
+        if (speed)
+            ImGui::SliderFloat("Move Speed", speed, 0.0001f, 0.01f, "%.4f");
+        if (sensitivity)
+            ImGui::SliderFloat("Sensitivity", sensitivity, 1.0f, 100.0f);
     }
-    
+
     if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
         glm::vec3 pos = camera->GetCameraPos();
         glm::vec3 dir = camera->GetDirection();
-        
+
         ImGui::Text("Position: X: %.2f  Y: %.2f  Z: %.2f", pos.x, pos.y, pos.z);
         ImGui::Text("Direction: X: %.2f  Y: %.2f  Z: %.2f", dir.x, dir.y, dir.z);
     }
-    
+
     ImGui::End();
 }
 
 void DrawAssetBrowserPanel(lgt::Scene* scene) {
-    if (!scene) return;
-    
+    if (!scene)
+        return;
+
     ImGui::Begin("Asset Browser");
-    
+
     std::filesystem::path modelsPath = "res/modles"; // Correcting typo locally if needed, but sticking to existing structure
     if (!std::filesystem::exists(modelsPath)) {
         modelsPath = "res/models"; // Fallback to correct spelling just in case
     }
-    
+
     if (std::filesystem::exists(modelsPath)) {
         static GLuint s_GltfIcon = 0;
-        static GLuint s_FbxIcon = 0;
-        
+        static GLuint s_FbxIcon  = 0;
+
         if (s_GltfIcon == 0) {
-            int width, height, nrChannels;
+            int            width, height, nrChannels;
             unsigned char* data = stbi_load("res/images/icon_gltf.jpg", &width, &height, &nrChannels, 4);
             if (data) {
                 glGenTextures(1, &s_GltfIcon);
@@ -254,9 +271,9 @@ void DrawAssetBrowserPanel(lgt::Scene* scene) {
                 stbi_image_free(data);
             }
         }
-        
+
         if (s_FbxIcon == 0) {
-            int width, height, nrChannels;
+            int            width, height, nrChannels;
             unsigned char* data = stbi_load("res/images/icon_fbx.jpg", &width, &height, &nrChannels, 4);
             if (data) {
                 glGenTextures(1, &s_FbxIcon);
@@ -268,14 +285,15 @@ void DrawAssetBrowserPanel(lgt::Scene* scene) {
                 stbi_image_free(data);
             }
         }
-        
-        static float padding = 16.0f;
-        static float thumbnailSize = 90.0f;
-        float cellSize = thumbnailSize + padding;
 
-        float panelWidth = ImGui::GetContentRegionAvail().x;
-        int columnCount = (int)(panelWidth / cellSize);
-        if (columnCount < 1) columnCount = 1;
+        static float padding       = 16.0f;
+        static float thumbnailSize = 90.0f;
+        float        cellSize      = thumbnailSize + padding;
+
+        float panelWidth  = ImGui::GetContentRegionAvail().x;
+        int   columnCount = (int)(panelWidth / cellSize);
+        if (columnCount < 1)
+            columnCount = 1;
 
         if (ImGui::BeginTable("AssetGrid", columnCount)) {
             for (auto& entry : std::filesystem::recursive_directory_iterator(modelsPath)) {
@@ -284,35 +302,38 @@ void DrawAssetBrowserPanel(lgt::Scene* scene) {
                     if (ext == ".gltf" || ext == ".glb" || ext == ".fbx") {
                         ImGui::TableNextColumn();
                         std::string filename = entry.path().filename().string();
-                        
+
                         std::string filepath = entry.path().string();
                         ImGui::PushID(filepath.c_str());
-                        
+
                         // Push button colors to look more like a Unity thumbnail backing
                         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.2f, 0.2f, 1.0f));
                         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
                         ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.15f, 0.15f, 0.15f, 1.0f));
-                        
+
                         bool clicked = false;
-                        
+
                         GLuint activeIcon = 0;
-                        if (ext == ".gltf" || ext == ".glb") activeIcon = s_GltfIcon;
-                        else if (ext == ".fbx") activeIcon = s_FbxIcon;
-                        
+                        if (ext == ".gltf" || ext == ".glb")
+                            activeIcon = s_GltfIcon;
+                        else if (ext == ".fbx")
+                            activeIcon = s_FbxIcon;
+
                         if (activeIcon != 0) {
-                            clicked = ImGui::ImageButton(filename.c_str(), (ImTextureID)(intptr_t)activeIcon, ImVec2(thumbnailSize, thumbnailSize));
+                            clicked = ImGui::ImageButton(
+                                filename.c_str(), (ImTextureID)(intptr_t)activeIcon, ImVec2(thumbnailSize, thumbnailSize));
                         } else {
                             clicked = ImGui::Button("MODEL", ImVec2(thumbnailSize, thumbnailSize));
                         }
-                        
+
                         if (clicked) {
                             scene->LoadGltf(entry.path().string());
                         }
                         ImGui::PopStyleColor(3);
-                        
+
                         // Attempt to center text under the button
                         float textWidth = ImGui::CalcTextSize(filename.c_str()).x;
-                        float offset = (thumbnailSize - textWidth) * 0.5f;
+                        float offset    = (thumbnailSize - textWidth) * 0.5f;
                         if (offset > 0.0f) {
                             ImGui::SetCursorPosX(ImGui::GetCursorPosX() + offset);
                         }
@@ -323,32 +344,32 @@ void DrawAssetBrowserPanel(lgt::Scene* scene) {
             }
             ImGui::EndTable();
         }
-        
+
     } else {
         ImGui::Text("Models directory not found.");
     }
-    
+
     ImGui::End();
 }
 
 void DrawInspectorPanel() {
     ImGui::Begin("Inspector");
-    
+
     static lgt::SceneNode* s_LastSelectedNode = nullptr;
-    static glm::vec3 s_Translation(0.0f);
-    static glm::vec3 s_RotationEuler(0.0f);
-    static glm::vec3 s_Scale(1.0f);
+    static glm::vec3       s_Translation(0.0f);
+    static glm::vec3       s_RotationEuler(0.0f);
+    static glm::vec3       s_Scale(1.0f);
 
     if (g_SelectedNode) {
         if (g_SelectedNode != s_LastSelectedNode) {
             s_LastSelectedNode = g_SelectedNode;
-            
+
             // Decompose the localTransform matrix only once upon selection
             glm::quat rotationQuat;
             glm::vec3 skew;
             glm::vec4 perspective;
             glm::decompose(g_SelectedNode->localTransform, s_Scale, rotationQuat, s_Translation, skew, perspective);
-            
+
             // Convert quaternion to Euler angles (in degrees for UI)
             s_RotationEuler = glm::degrees(glm::eulerAngles(rotationQuat));
         }
@@ -382,17 +403,17 @@ void DrawInspectorPanel() {
                     ImGui::TableNextColumn();
                     ImGui::PushID(label.c_str());
 
-                    float availableWidth = ImGui::GetContentRegionAvail().x;
-                    float itemWidth = (availableWidth - ImGui::GetStyle().ItemSpacing.x * 2.0f) / 3.0f;
-                    float lineHeight = ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.y * 2.0f;
-                    ImVec2 buttonSize = { lineHeight + 3.0f, lineHeight };
+                    float  availableWidth = ImGui::GetContentRegionAvail().x;
+                    float  itemWidth      = (availableWidth - ImGui::GetStyle().ItemSpacing.x * 2.0f) / 3.0f;
+                    float  lineHeight     = ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.y * 2.0f;
+                    ImVec2 buttonSize     = {lineHeight + 3.0f, lineHeight};
 
                     auto drawComponent = [&](const char* compLabel, float* v, const ImVec4& color, const ImVec4& hoverColor) {
                         ImGui::PushStyleColor(ImGuiCol_Button, color);
                         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hoverColor);
                         ImGui::PushStyleColor(ImGuiCol_ButtonActive, color);
                         if (ImGui::Button(compLabel, buttonSize)) {
-                            *v = resetValue;
+                            *v       = resetValue;
                             modified = true;
                         }
                         ImGui::PopStyleColor(3);
@@ -423,16 +444,18 @@ void DrawInspectorPanel() {
                 };
 
                 bool modified = false;
-                if (DrawVec3Control("Position", s_Translation)) modified = true;
-                if (DrawVec3Control("Rotation", s_RotationEuler)) modified = true;
-                if (DrawVec3Control("Scale", s_Scale, 1.0f)) modified = true;
+                if (DrawVec3Control("Position", s_Translation))
+                    modified = true;
+                if (DrawVec3Control("Rotation", s_RotationEuler))
+                    modified = true;
+                if (DrawVec3Control("Scale", s_Scale, 1.0f))
+                    modified = true;
 
                 if (modified) {
-                    glm::quat newRot = glm::quat(glm::radians(s_RotationEuler));
-                    glm::mat4 newTransform = glm::translate(glm::mat4(1.0f), s_Translation) * 
-                                             glm::mat4_cast(newRot) * 
+                    glm::quat newRot       = glm::quat(glm::radians(s_RotationEuler));
+                    glm::mat4 newTransform = glm::translate(glm::mat4(1.0f), s_Translation) * glm::mat4_cast(newRot) *
                                              glm::scale(glm::mat4(1.0f), s_Scale);
-                    
+
                     g_SelectedNode->localTransform = newTransform;
                     g_SelectedNode->UpdateTransformCascades();
                 }
@@ -440,45 +463,45 @@ void DrawInspectorPanel() {
                 ImGui::EndTable();
             }
         }
-        
+
         // 3. Mesh Components
         if (!g_SelectedNode->meshes.empty()) {
             for (size_t i = 0; i < g_SelectedNode->meshes.size(); ++i) {
                 ImGui::PushID((int)i);
                 auto& mesh = g_SelectedNode->meshes[i];
-                
+
                 ImGui::Spacing();
                 std::string filterHeader = "Mesh Filter (" + std::to_string(i) + ")";
                 if (ImGui::CollapsingHeader(filterHeader.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
                     if (ImGui::BeginTable("MeshFilterTable", 2, ImGuiTableFlags_SizingStretchProp)) {
                         ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 80.0f);
                         ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
-                        
+
                         ImGui::TableNextRow();
                         ImGui::TableNextColumn();
                         ImGui::AlignTextToFramePadding();
                         ImGui::Text("Mesh");
-                        
+
                         ImGui::TableNextColumn();
                         std::string meshName = mesh.name.empty() ? ("Unnamed Mesh") : mesh.name;
                         ImGui::Text("%s (Indices: %zu)", meshName.c_str(), mesh.indexCount);
-                        
+
                         ImGui::EndTable();
                     }
                 }
-                
+
                 ImGui::Spacing();
                 std::string rendererHeader = "Mesh Renderer (" + std::to_string(i) + ")";
                 if (ImGui::CollapsingHeader(rendererHeader.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
                     if (ImGui::BeginTable("MeshRendererTable", 2, ImGuiTableFlags_SizingStretchProp)) {
                         ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 80.0f);
                         ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
-                        
+
                         ImGui::TableNextRow();
                         ImGui::TableNextColumn();
                         ImGui::AlignTextToFramePadding();
                         ImGui::Text("Material");
-                        
+
                         ImGui::TableNextColumn();
                         std::string currentMatName = "Unknown";
                         for (const auto& [name, brdf] : lgt::g_MaterialBRDF) {
@@ -487,14 +510,14 @@ void DrawInspectorPanel() {
                                 break;
                             }
                         }
-                        
+
                         ImGui::SetNextItemWidth(-1);
                         if (ImGui::BeginCombo("##Material", currentMatName.c_str())) {
                             for (const auto& [name, brdf] : lgt::g_MaterialBRDF) {
-                                bool isSelected = (mesh.materialIndex == brdf.gpuIndex);
+                                bool        isSelected  = (mesh.materialIndex == brdf.gpuIndex);
                                 std::string displayName = name.empty() ? "Unnamed Material" : name;
                                 std::string uniqueLabel = displayName + "##mat_" + std::to_string(brdf.gpuIndex);
-                                
+
                                 if (ImGui::Selectable(uniqueLabel.c_str(), isSelected)) {
                                     mesh.materialIndex = brdf.gpuIndex;
                                 }
@@ -504,21 +527,21 @@ void DrawInspectorPanel() {
                             }
                             ImGui::EndCombo();
                         }
-                        
+
                         ImGui::EndTable();
                     }
                 }
                 ImGui::PopID();
             }
         }
-        
+
         // 4. Hierarchy Info
         ImGui::Spacing();
         if (ImGui::CollapsingHeader("Hierarchy Info")) {
             if (ImGui::BeginTable("HierarchyTable", 2, ImGuiTableFlags_SizingStretchProp)) {
                 ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 80.0f);
                 ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
-                
+
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
                 ImGui::Text("Parent");
@@ -528,13 +551,13 @@ void DrawInspectorPanel() {
                 } else {
                     ImGui::Text("None (Root)");
                 }
-                
+
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
                 ImGui::Text("Children");
                 ImGui::TableNextColumn();
                 ImGui::Text("%zu", g_SelectedNode->children.size());
-                
+
                 ImGui::EndTable();
             }
         }
@@ -542,7 +565,7 @@ void DrawInspectorPanel() {
         s_LastSelectedNode = nullptr;
         ImGui::Text("No node selected.");
     }
-    
+
     ImGui::End();
 }
 
@@ -674,7 +697,7 @@ void DrawMaterialEditorPanel() {
 
 void DrawConsolePanel() {
     ImGui::Begin("Console");
-    
+
     auto sink = Log::GetConsoleSink();
     if (!sink) {
         ImGui::Text("Console sink not initialized.");
@@ -686,39 +709,55 @@ void DrawConsolePanel() {
         sink->clear();
     }
     ImGui::SameLine();
-    
+
     static bool autoScroll = true;
     ImGui::Checkbox("Auto-scroll", &autoScroll);
-    
+
     ImGui::Separator();
-    
+
     ImGui::BeginChild("ScrollingRegion", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
-    
+
     auto messages = sink->get_messages();
-    
+
     for (const auto& msg : messages) {
         ImVec4 color;
-        bool hasColor = true;
-        
+        bool   hasColor = true;
+
         switch (msg.level) {
-            case spdlog::level::trace:    color = ImVec4(0.5f, 0.5f, 0.5f, 1.0f); break; // Gray
-            case spdlog::level::debug:    color = ImVec4(0.2f, 0.7f, 0.2f, 1.0f); break; // Green
-            case spdlog::level::info:     color = ImVec4(0.8f, 0.8f, 0.8f, 1.0f); break; // White
-            case spdlog::level::warn:     color = ImVec4(1.0f, 0.8f, 0.2f, 1.0f); break; // Yellow
-            case spdlog::level::err:      color = ImVec4(1.0f, 0.3f, 0.3f, 1.0f); break; // Red
-            case spdlog::level::critical: color = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); break; // Bright Red
-            default: hasColor = false; break;
+        case spdlog::level::trace:
+            color = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
+            break; // Gray
+        case spdlog::level::debug:
+            color = ImVec4(0.2f, 0.7f, 0.2f, 1.0f);
+            break; // Green
+        case spdlog::level::info:
+            color = ImVec4(0.8f, 0.8f, 0.8f, 1.0f);
+            break; // White
+        case spdlog::level::warn:
+            color = ImVec4(1.0f, 0.8f, 0.2f, 1.0f);
+            break; // Yellow
+        case spdlog::level::err:
+            color = ImVec4(1.0f, 0.3f, 0.3f, 1.0f);
+            break; // Red
+        case spdlog::level::critical:
+            color = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
+            break; // Bright Red
+        default:
+            hasColor = false;
+            break;
         }
-        
-        if (hasColor) ImGui::PushStyleColor(ImGuiCol_Text, color);
+
+        if (hasColor)
+            ImGui::PushStyleColor(ImGuiCol_Text, color);
         ImGui::TextUnformatted(msg.text.c_str());
-        if (hasColor) ImGui::PopStyleColor();
+        if (hasColor)
+            ImGui::PopStyleColor();
     }
-    
+
     if (autoScroll && ImGui::GetScrollY() >= ImGui::GetScrollMaxY()) {
         ImGui::SetScrollHereY(1.0f);
     }
-    
+
     ImGui::EndChild();
     ImGui::End();
 }

@@ -234,7 +234,7 @@ public:
     void updateDirtyRange(MaterialGPU* data, size_t offset, size_t count);
 
     void render();
-    void renderNode(SceneNode* node);
+    void renderNode(SceneNode* node, Pipeline* shader);
 
 private:
     // Helper methods
@@ -253,7 +253,24 @@ private:
     DebugMode m_debugMode = DebugMode::FINAL_COLOR;
 
     Pipeline* testPipeline = nullptr;
+    Pipeline* depthPrepassShader = nullptr;
+    Pipeline* lightCullingShader = nullptr;
+
     Camera*   camera_      = nullptr;
     Scene*    scene_       = nullptr;
+
+    // Forward+ resources
+    RenderId m_lightsSSBO = 0;
+    RenderId m_visibleLightIndicesSSBO = 0;
+    RenderId m_depthMapFBO = 0;
+    RenderId m_depthMap = 0;
+    
+    int m_viewportWidth = 0;
+    int m_viewportHeight = 0;
+    int m_workGroupsX = 0;
+    int m_workGroupsY = 0;
+
+    void setupForwardPlus(int width, int height);
+    void uploadLights();
 };
 } // namespace lgt

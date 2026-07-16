@@ -9,7 +9,12 @@ Pipeline::Pipeline(const std::string& filepath)
     : m_filepath(filepath),
       m_RenderID(0) {
     shadersource source = parseShader(filepath);
-    m_RenderID          = createShader(source.vertexSource, source.fragmentSource);
+    if (!source.computeSource.empty()) {
+        m_type = ShaderType::COMPUTESHADER;
+        m_RenderID = createComputeShader(source.computeSource);
+    } else {
+        m_RenderID = createShader(source.vertexSource, source.fragmentSource);
+    }
 
     cacheUniformLocations();
     CORE_INFO("Shader loaded from: {} | ID: {}", filepath, m_RenderID);
@@ -20,7 +25,12 @@ Pipeline::Pipeline(const std::string& filepath, ShaderType type)
       m_RenderID(0),
       m_type(type) {
     shadersource source = parseShader(filepath);
-    m_RenderID          = createShader(source.vertexSource, source.fragmentSource);
+    if (type == ShaderType::COMPUTESHADER || !source.computeSource.empty()) {
+        m_type = ShaderType::COMPUTESHADER;
+        m_RenderID = createComputeShader(source.computeSource);
+    } else {
+        m_RenderID = createShader(source.vertexSource, source.fragmentSource);
+    }
 
     cacheUniformLocations();
     CORE_INFO("Shader loaded from: {} | ID: {}", filepath, m_RenderID);
@@ -58,12 +68,13 @@ shadersource Pipeline::parseShader(const std::string& filepath) {
     }
 
     std::string       line;
-    std::stringstream ss[2];
+    std::stringstream ss[3];
 
     enum class InternalShaderType {
         NONE     = -1,
         VERTEX   = 0,
-        FRAGMENT = 1
+        FRAGMENT = 1,
+        COMPUTE  = 2
     };
     InternalShaderType type = InternalShaderType::NONE;
 
@@ -73,12 +84,14 @@ shadersource Pipeline::parseShader(const std::string& filepath) {
                 type = InternalShaderType::VERTEX;
             else if (line.find("Fragment") != std::string::npos)
                 type = InternalShaderType::FRAGMENT;
+            else if (line.find("Compute") != std::string::npos)
+                type = InternalShaderType::COMPUTE;
         } else if (type != InternalShaderType::NONE) {
             ss[static_cast<int>(type)] << line << "\n";
         }
     }
 
-    return {ss[0].str(), ss[1].str()};
+    return {ss[0].str(), ss[1].str(), ss[2].str()};
 }
 
 unsigned int Pipeline::compileShader(unsigned int type, const std::string& source) {
@@ -89,7 +102,10 @@ unsigned int Pipeline::compileShader(unsigned int type, const std::string& sourc
 
     int result;
     glGetShaderiv(id, GL_COMPILE_STATUS, &result);
-    std::string shaderTypeStr = (type == GL_VERTEX_SHADER) ? "Vertex" : "Fragment";
+    std::string shaderTypeStr;
+    if (type == GL_VERTEX_SHADER) shaderTypeStr = "Vertex";
+    else if (type == GL_FRAGMENT_SHADER) shaderTypeStr = "Fragment";
+    else if (type == GL_COMPUTE_SHADER) shaderTypeStr = "Compute";
 
     if (result == GL_FALSE) {
         int length;
@@ -154,6 +170,56 @@ unsigned int Pipeline::createShader(const std::string& vertexShader, const std::
 
     CORE_INFO("Shader program linked successfully | Program ID: {}", program);
     return program;
+}
+
+unsigned int Pipeline::createComputeShader(const std::string& computeShader) {
+    unsigned int program = glCreateProgram();
+    unsigned int cs      = compileShader(GL_COMPUTE_SHADER, computeShader);
+
+    if (cs == 0) {
+        CORE_ERROR("Compute Shader compilation failed, cannot create program");
+        glDeleteProgram(program);
+        return 0;
+    }
+
+    glAttachShader(program, cs);
+    glLinkProgram(program);
+
+    int success;
+    glGetProgramiv(program, GL_LINK_STATUS, &success);
+    if (!success) {
+        int length;
+        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
+
+        std::vector<char> errorLog(length);
+        glGetProgramInfoLog(program, length, &length, errorLog.data());
+
+        CORE_ERROR("Compute Shader program linking error: {}", errorLog.data());
+
+        glDeleteShader(cs);
+        glDeleteProgram(program);
+        return 0;
+    }
+
+    glValidateProgram(program);
+    glGetProgramiv(program, GL_VALIDATE_STATUS, &success);
+    if (!success) {
+        CORE_WARN("Compute Shader program validation failed for Program ID: {}", program);
+    }
+
+    glDeleteShader(cs);
+
+    CORE_INFO("Compute Shader program linked successfully | Program ID: {}", program);
+    return program;
+}
+
+void Pipeline::dispatch(unsigned int x, unsigned int y, unsigned int z) const {
+    if (m_type == ShaderType::COMPUTESHADER && m_RenderID != 0) {
+        glUseProgram(m_RenderID);
+        glDispatchCompute(x, y, z);
+    } else {
+        CORE_WARN("Attempted to dispatch a non-compute shader!");
+    }
 }
 
 void Pipeline::cacheUniformLocations() {

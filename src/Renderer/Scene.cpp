@@ -36,6 +36,7 @@ inline glm::mat4 ConvertMatrixToGLM(const aiMatrix4x4& from) {
 
 void Scene::Clear() {
     m_RootNodes.clear();
+    m_lights.clear();
 }
 
 void Scene::RemoveNode(SceneNode* nodeToRemove) {

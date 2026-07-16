@@ -14,6 +14,13 @@
 
 namespace lgt {
 
+struct PointLight {
+    glm::vec4 position; // w is padding or could be radius (using separate radius for clarity)
+    glm::vec4 color;    // w is intensity
+    float     radius;
+    float     padding[3];
+};
+
 struct SceneNode {
     std::string       name;
     std::vector<Mesh> meshes;
@@ -56,6 +63,8 @@ public:
 
     const std::vector<std::shared_ptr<SceneNode>>& getRootNodes() const { return m_RootNodes; }
     std::vector<MaterialGPU>&                      getMaterialBuffer() { return m_materialBuffer; };
+    std::vector<PointLight>&                       getLights() { return m_lights; }
+    void                                           addLight(const PointLight& light) { m_lights.push_back(light); }
 
 private:
     void                       processMaterials(const aiScene* scene, const std::string& dir);
@@ -63,6 +72,7 @@ private:
     Mesh                       processMesh(aiMesh* mesh, const std::vector<uint32_t>& materialMap);
 
     std::vector<MaterialGPU>                m_materialBuffer;
+    std::vector<PointLight>                 m_lights;
     std::vector<std::shared_ptr<SceneNode>> m_RootNodes;
 };
 

@@ -1,0 +1,129 @@
+#shader Compute
+#version 460 core
+
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+struct PointLight {
+    vec4 position;
+    vec4 color;
+    float radius;
+    float padding[3];
+};
+
+layout(std430, binding = 1) readonly buffer LightBuffer {
+    PointLight lights[];
+};
+
+layout(std430, binding = 2) writeonly buffer VisibleLightIndicesBuffer {
+    int visibleLightIndices[];
+};
+
+uniform sampler2D depthMap;
+uniform vec2 screenSize;
+uniform mat4 u_View;
+uniform mat4 u_Projection;
+uniform int lightCount;
+
+shared uint minDepthInt;
+shared uint maxDepthInt;
+shared uint visibleLightCount;
+shared int visibleLightList[256];
+
+void main() {
+    ivec2 pixelPos = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 tileID = ivec2(gl_WorkGroupID.xy);
+    ivec2 tileNumber = ivec2(gl_NumWorkGroups.xy);
+    uint tileIndex = tileID.y * tileNumber.x + tileID.x;
+    
+    // Initialize shared variables
+    if (gl_LocalInvocationIndex == 0) {
+        minDepthInt = 0xFFFFFFFF;
+        maxDepthInt = 0;
+        visibleLightCount = 0;
+    }
+    
+    barrier();
+    
+    // Calculate min/max depth for the tile
+    vec2 tc = vec2(pixelPos) / screenSize;
+    float depth = texture(depthMap, tc).r;
+    
+    // Linearize depth
+    float zNear = 0.1; // Hardcoded for now, should be uniform if dynamic
+    float zFar = 1000.0;
+    float linearDepth = (2.0 * zNear * zFar) / (zFar + zNear - (2.0 * depth - 1.0) * (zFar - zNear));
+    
+    uint depthInt = floatBitsToUint(linearDepth);
+    
+    atomicMin(minDepthInt, depthInt);
+    atomicMax(maxDepthInt, depthInt);
+    
+    barrier();
+    
+    float minDepth = uintBitsToFloat(minDepthInt);
+    float maxDepth = uintBitsToFloat(maxDepthInt);
+    
+    // Construct frustum planes for the tile (simplified approach: sphere vs frustum)
+    // For simplicity, we can do light culling in View Space.
+    // Calculate tile frustum in view space
+    
+    vec2 tileScale = screenSize / float(16 * 2.0);
+    vec2 tileBias = tileScale - vec2(tileID);
+    
+    vec4 c1 = vec4(-u_Projection[0][0] * tileScale.x, 0.0, tileBias.x, 0.0);
+    vec4 c2 = vec4(0.0, -u_Projection[1][1] * tileScale.y, tileBias.y, 0.0);
+    vec4 c4 = vec4(0.0, 0.0, 1.0, 0.0);
+    
+    vec4 frustumPlanes[6];
+    frustumPlanes[0] = c4 - c1; // Right
+    frustumPlanes[1] = c4 + c1; // Left
+    frustumPlanes[2] = c4 - c2; // Top
+    frustumPlanes[3] = c4 + c2; // Bottom
+    frustumPlanes[4] = vec4(0.0, 0.0, -1.0, -minDepth); // Near
+    frustumPlanes[5] = vec4(0.0, 0.0, 1.0, maxDepth);  // Far
+    
+    for (int i = 0; i < 4; i++) {
+        frustumPlanes[i] = normalize(frustumPlanes[i]);
+    }
+    
+    // Cull lights
+    uint threadCount = 16 * 16;
+    uint passCount = (lightCount + threadCount - 1) / threadCount;
+    
+    for (uint i = 0; i < passCount; i++) {
+        uint lightIndex = i * threadCount + gl_LocalInvocationIndex;
+        if (lightIndex >= lightCount) break;
+        
+        PointLight light = lights[lightIndex];
+        vec4 viewLightPos = u_View * vec4(light.position.xyz, 1.0);
+        float radius = light.radius;
+        
+        bool inFrustum = true;
+        for (int j = 0; j < 6; j++) {
+            float d = dot(frustumPlanes[j], viewLightPos);
+            if (d < -radius) {
+                inFrustum = false;
+                break;
+            }
+        }
+        
+        if (inFrustum) {
+            uint offset = atomicAdd(visibleLightCount, 1);
+            if (offset < 256) {
+                visibleLightList[offset] = int(lightIndex);
+            }
+        }
+    }
+    
+    barrier();
+    
+    // Write back to global memory
+    if (gl_LocalInvocationIndex == 0) {
+        uint offset = tileIndex * 257;
+        uint count = min(visibleLightCount, 256);
+        visibleLightIndices[offset] = int(count);
+        for (uint i = 0; i < count; i++) {
+            visibleLightIndices[offset + 1 + i] = visibleLightList[i];
+        }
+    }
+}

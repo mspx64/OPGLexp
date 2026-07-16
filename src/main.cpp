@@ -35,11 +35,9 @@ int main() {
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     
-    // Load a professional-looking font at a larger size
     ImFontConfig fontConfig;
     fontConfig.OversampleH = 2;
     fontConfig.OversampleV = 2;
-    // Segoe UI is practically the Windows default font and looks very clean. 
     io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\segoeui.ttf", 20.0f, &fontConfig);
     
     Editor::ApplyProfessionalTheme();
@@ -139,6 +137,24 @@ DockSpace         ID=0x08BD597D Window=0x1BBC0F80 Pos=0,0 Size=1920,1055 Split=X
 
     lgt::Scene  scene;
     lgt::Camera camera((int)width, (int)height, glm::vec3(0.0f, 1.5f, 3.0f));
+
+    // Spawn a 10x10 grid of dynamic point lights for testing Forward+
+    for (int x = -5; x < 5; x++) {
+        for (int z = -5; z < 5; z++) {
+            lgt::PointLight light;
+            light.position = glm::vec4(x * 1.5f, 1.0f, z * 1.5f, 1.0f);
+            
+            // Generate some random looking colors based on position
+            float r = (sin(x * 1.3f) + 1.0f) * 0.5f;
+            float g = (cos(z * 1.7f) + 1.0f) * 0.5f;
+            float b = (sin((x + z) * 1.1f) + 1.0f) * 0.5f;
+            
+            light.color = glm::vec4(r, g, b, 2.0f); // RGB + Intensity
+            light.radius = 2.5f;
+            
+            scene.addLight(light);
+        }
+    }
 
     // Models are now loaded dynamically via the Asset Browser panel at runtime
 

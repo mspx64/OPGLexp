@@ -14,12 +14,14 @@ struct MaterialGPU;
 
 enum ShaderType {
     DEPTHSHADER,
-    COLORSHADER
+    COLORSHADER,
+    COMPUTESHADER
 };
 
 struct shadersource {
     std::string vertexSource;
     std::string fragmentSource;
+    std::string computeSource;
 };
 
 class Pipeline {
@@ -33,6 +35,7 @@ private:
     shadersource parseShader(const std::string& filepath);
     unsigned int compileShader(unsigned int type, const std::string& source);
     unsigned int createShader(const std::string& vertexShader, const std::string& fragmentShader);
+    unsigned int createComputeShader(const std::string& computeShader);
     void         cacheUniformLocations();
     int          getUniformLocation(const std::string& name) const;
 
@@ -74,6 +77,7 @@ public:
     void use() const;
     void useWithCamera(Camera& Camera);
     void unuse() const;
+    void dispatch(unsigned int x, unsigned int y, unsigned int z) const;
 
     // Modern uniform setting methods
     void setBool(const std::string& name, bool value) const;

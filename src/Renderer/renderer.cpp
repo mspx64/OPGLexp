@@ -153,12 +153,25 @@ Renderer::~Renderer() {}
 
 void Renderer::init() {
     testPipeline = new Pipeline("res/shaders/PBR.shader");
+    depthPrepassShader = new Pipeline("res/shaders/DepthPrepass.shader");
+    lightCullingShader = new Pipeline("res/shaders/LightCulling.comp");
+    
     createMaterailBuffer(g_MaterialGPU.size());
     uploadMaterialBuffer(g_MaterialGPU.data(), g_MaterialGPU.size());
+
+    // Initially setup for standard 1920x1080, will be updated on resize
+    setupForwardPlus(1920, 1080);
 }
 
 void Renderer::shutdown() {
     delete testPipeline;
+    delete depthPrepassShader;
+    delete lightCullingShader;
+
+    if (m_lightsSSBO != 0) glDeleteBuffers(1, &m_lightsSSBO);
+    if (m_visibleLightIndicesSSBO != 0) glDeleteBuffers(1, &m_visibleLightIndicesSSBO);
+    if (m_depthMapFBO != 0) glDeleteFramebuffers(1, &m_depthMapFBO);
+    if (m_depthMap != 0) glDeleteTextures(1, &m_depthMap);
 }
 
 void Renderer::GLClearError() {
@@ -257,6 +270,9 @@ void Renderer::enableBlending(bool enable) {
 
 void Renderer::setViewport(int width, int height) {
     if (width > 0 && height > 0) {
+        if (width != m_viewportWidth || height != m_viewportHeight) {
+            setupForwardPlus(width, height);
+        }
         GlCall(glViewport(0, 0, width, height));
     }
 }
@@ -475,8 +491,8 @@ void Renderer::render() {
         CORE_ERROR("No scene available");
         return;
     }
-    if (!testPipeline) {
-        CORE_ERROR("No pipeline available");
+    if (!testPipeline || !depthPrepassShader || !lightCullingShader) {
+        CORE_ERROR("Pipelines not available");
         return;
     }
 
@@ -490,24 +506,124 @@ void Renderer::render() {
         }
     }
 
-    testPipeline->useWithCamera(*camera_);
+    uploadLights();
 
+    // Save current FBO to restore later
+    GLint currentFBO;
+    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &currentFBO);
+
+    // 1. Depth Pre-pass
+    glBindFramebuffer(GL_FRAMEBUFFER, m_depthMapFBO);
+    glViewport(0, 0, m_viewportWidth, m_viewportHeight);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    
+    depthPrepassShader->useWithCamera(*camera_);
     for (auto sceneNode : scene_->getRootNodes()) {
-        renderNode(sceneNode.get());
+        renderNode(sceneNode.get(), depthPrepassShader);
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, currentFBO);
+
+    // 2. Light Culling Compute Pass
+    lightCullingShader->useWithCamera(*camera_);
+    lightCullingShader->setInt("depthMap", 4);
+    lightCullingShader->setVec2("screenSize", static_cast<float>(m_viewportWidth), static_cast<float>(m_viewportHeight));
+    lightCullingShader->setInt("lightCount", scene_->getLights().size());
+    
+    glActiveTexture(GL_TEXTURE4);
+    glBindTexture(GL_TEXTURE_2D, m_depthMap);
+    
+    lightCullingShader->dispatch(m_workGroupsX, m_workGroupsY, 1);
+    
+    // Ensure compute writes are visible to fragment shader
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    // 3. Main Forward Pass
+    glViewport(0, 0, m_viewportWidth, m_viewportHeight);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Note: Could use GL_EQUAL depth testing and not clear depth, but simplicity for now
+
+    testPipeline->useWithCamera(*camera_);
+    testPipeline->setInt("u_ScreenWidth", m_viewportWidth);
+    
+    for (auto sceneNode : scene_->getRootNodes()) {
+        renderNode(sceneNode.get(), testPipeline);
     }
 }
 
-void Renderer::renderNode(SceneNode* node) {
-    testPipeline->setMat4("u_Model", node->globalTransform);
+void Renderer::renderNode(SceneNode* node, Pipeline* shader) {
+    shader->setMat4("u_Model", node->globalTransform);
 
     for (auto& mesh : node->meshes) {
-        testPipeline->setMaterial(mesh.materialIndex);
+        if (shader == testPipeline) {
+            shader->setMaterial(mesh.materialIndex);
+        }
         glBindVertexArray(mesh.vao);
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.indexCount), GL_UNSIGNED_INT, 0);
     }
     for (auto child : node->children) {
-        renderNode(child.get());
+        renderNode(child.get(), shader);
     }
+}
+
+void Renderer::setupForwardPlus(int width, int height) {
+    m_viewportWidth = width;
+    m_viewportHeight = height;
+
+    // Tile size is 16x16
+    const int TILE_SIZE = 16;
+    m_workGroupsX = (width + TILE_SIZE - 1) / TILE_SIZE;
+    m_workGroupsY = (height + TILE_SIZE - 1) / TILE_SIZE;
+    size_t numTiles = m_workGroupsX * m_workGroupsY;
+
+    // Depth Prepass FBO
+    if (m_depthMapFBO != 0) glDeleteFramebuffers(1, &m_depthMapFBO);
+    if (m_depthMap != 0) glDeleteTextures(1, &m_depthMap);
+
+    glGenFramebuffers(1, &m_depthMapFBO);
+    glGenTextures(1, &m_depthMap);
+    
+    glBindTexture(GL_TEXTURE_2D, m_depthMap);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    GLint prevFBO;
+    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &prevFBO);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, m_depthMapFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depthMap, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, prevFBO);
+
+    // Visible Light Indices SSBO
+    const int maxLightsPerTile = 256;
+    size_t visibleLightIndicesSize = numTiles * (1 + maxLightsPerTile) * sizeof(int);
+
+    if (m_visibleLightIndicesSSBO != 0) glDeleteBuffers(1, &m_visibleLightIndicesSSBO);
+    glGenBuffers(1, &m_visibleLightIndicesSSBO);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_visibleLightIndicesSSBO);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, visibleLightIndicesSize, nullptr, GL_DYNAMIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_visibleLightIndicesSSBO);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+void Renderer::uploadLights() {
+    if (!scene_) return;
+    
+    const auto& lights = scene_->getLights();
+    size_t lightCount = lights.size();
+    if (lightCount == 0) lightCount = 1; // Prevent empty buffer error
+
+    if (m_lightsSSBO == 0) {
+        glGenBuffers(1, &m_lightsSSBO);
+    }
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_lightsSSBO);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, lightCount * sizeof(PointLight), lights.empty() ? nullptr : lights.data(), GL_DYNAMIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_lightsSSBO);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
 } // namespace lgt
